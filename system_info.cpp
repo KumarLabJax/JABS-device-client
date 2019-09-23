@@ -4,6 +4,7 @@
 
 #include <sys/sysinfo.h>
 #include <sys/statvfs.h>
+#include <assert.h>
 
 #include "system_info.h"
 
@@ -15,6 +16,10 @@ SysInfo::SysInfo(void)
     this->mem_total = this->system_info.totalram * this->system_info.mem_unit / 1024;
 }
 
+/*
+ * this method is intended to be called periodically to update memory available, 
+ * disk available, system load, etc
+ */
 void SysInfo::sample(void)
 {
     sysinfo(&this->system_info);
@@ -32,6 +37,7 @@ void SysInfo::sample(void)
             di.capacity = this->blocks_to_gb(buf.f_blocks, buf.f_frsize);
             di.available = this->blocks_to_gb(buf.f_bavail, buf.f_bsize);
         } else {
+        // TODO handle the error case. for now we just return zero for capacity/available
             di.capacity = 0.0;
             di.available = 0.0;
         }
@@ -73,6 +79,7 @@ void SysInfo::register_mount(std::string mount)
 
 std::vector<std::string> SysInfo::get_registered_mounts()
 {
+    // return a vector instead of the set we're using internally
     std::vector<std::string> v(this->mount_points.begin(), this->mount_points.end());
     return v;
 }
@@ -83,14 +90,11 @@ disk_info SysInfo::get_disk_info(std::string mount)
     disk_info di;
     
     auto it = this->disk_information.find(mount);
-    if (it != this->disk_information.end()) {
-        di.capacity = it->second.capacity;
-        di.available = it->second.available;
+    assert(it != this->disk_information.end());
         
-    } else {
-        di.capacity = 0.0;
-        di.available = 0.0;
-    }
+    di.capacity = it->second.capacity;
+    di.available = it->second.available;
+
     return di;
 }
 

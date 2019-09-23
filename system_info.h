@@ -47,7 +47,7 @@ class SysInfo {
 
     public:
         /**
-         * constructor
+         * @brief constructor
          *  
          * creates new SysInfo instance and calls the sample() method to initialize the 
          * state
@@ -56,7 +56,7 @@ class SysInfo {
         SysInfo();
         
         /**
-         * sample system information
+         * @brief sample system information
          * 
          * refreshes the view of the system by getting updated memory usage, load,
          * disk usage, etc
@@ -87,7 +87,7 @@ class SysInfo {
         float get_load() {return this->load;}
         
         /**
-         * register mount point
+         * @brief register mount point
          *
          * register a mount point so that we will gather information about it (capacity, 
          * available space)
@@ -104,7 +104,7 @@ class SysInfo {
         std::vector<std::string> get_registered_mounts();
         
         /**
-         * returns information about capacity and available disk space
+         * @brief returns information about capacity and available disk space
          *
          * this method looks up a mount point, specified as a string, and returns the 
          * capacity and available disk space in a struct. This mount point must have been
