@@ -87,6 +87,13 @@ class SysInfo {
         float get_load() {return this->load;}
         
         /**
+         * get uptime in seconds
+         *
+         * @return number of seconds since boot
+         */
+        unsigned long get_uptime() {return this->system_info.uptime;}
+        
+        /**
          * @brief register mount point
          *
          * register a mount point so that we will gather information about it (capacity, 
@@ -95,6 +102,12 @@ class SysInfo {
          * @param path string containing path to mount
          */
         void register_mount(std::string path);
+        
+        /**
+         * @brief clear list of registered mount points
+         *
+         */
+         void clear_mounts();
         
         /**
          * get mount points that have been registered for monitoring

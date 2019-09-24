@@ -28,6 +28,7 @@ void SysInfo::sample(void)
     // convert the integer value sysinfo gives us to the floating point number we expect
     this->load = this->system_info.loads[0] / (float)(1 << SI_LOAD_SHIFT);
     
+    
     // update disk information
     for(auto m : this->mount_points) {
         struct statvfs buf;
@@ -75,6 +76,12 @@ void SysInfo::register_mount(std::string mount)
 {
     // TODO check that mount point exists before registering, otherwise throw exception
     this->mount_points.insert(mount);
+}
+
+void SysInfo::clear_mounts()
+{
+    this->mount_points.clear();
+    this->disk_information.clear();
 }
 
 std::vector<std::string> SysInfo::get_registered_mounts()
