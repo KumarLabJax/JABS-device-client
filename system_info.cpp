@@ -4,6 +4,7 @@
 
 #include <sys/sysinfo.h>
 #include <sys/statvfs.h>
+#include <unistd.h>
 #include <assert.h>
 
 #include "system_info.h"
@@ -11,6 +12,9 @@
 SysInfo::SysInfo(void)
 {
     this->sample();
+    char buffer[1024];
+    gethostname(buffer, sizeof(buffer));
+    this->hostname = std::string(buffer);
         
     // get the amount of physical RAM -- this won't change so we don't need to update
     this->mem_total = this->system_info.totalram * this->system_info.mem_unit / 1024;
@@ -35,12 +39,12 @@ void SysInfo::sample(void)
         disk_info di;
         
         if (statvfs(m.c_str(), &buf) == 0) {
-            di.capacity = this->blocks_to_gb(buf.f_blocks, buf.f_frsize);
-            di.available = this->blocks_to_gb(buf.f_bavail, buf.f_bsize);
+            di.capacity = this->blocks_to_kb(buf.f_blocks, buf.f_frsize);
+            di.available = this->blocks_to_kb(buf.f_bavail, buf.f_bsize);
         } else {
         // TODO handle the error case. for now we just return zero for capacity/available
-            di.capacity = 0.0;
-            di.available = 0.0;
+            di.capacity = 0;
+            di.available = 0;
         }
         this->disk_information[m] = di;
     }
@@ -105,9 +109,9 @@ disk_info SysInfo::get_disk_info(std::string mount)
     return di;
 }
 
-double SysInfo::blocks_to_gb(fsblkcnt_t blocks, unsigned long bsize)
+unsigned long SysInfo::blocks_to_kb(fsblkcnt_t blocks, unsigned long bsize)
 {
-    // convert number of filesystem blocks into a size in GB
-    return blocks / (1073741824.0 / bsize);
+    // convert number of filesystem blocks into a size in kB
+    return blocks * bsize / 1024;
 }
 

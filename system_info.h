@@ -1,3 +1,6 @@
+#ifndef SYSTEM_INFO_H
+#define SYSTEM_INFO_H
+
 #include <exception>
 #include <map>
 #include <set>
@@ -7,8 +10,8 @@
 #include <sys/types.h>
 
 struct disk_info {
-    double capacity;
-    double available;
+    unsigned long capacity;
+    unsigned long available;
 };
 
 class DiskRegistrationException: public std::exception {
@@ -38,11 +41,12 @@ class SysInfo {
         unsigned long mem_available;
         unsigned long mem_total;
         struct sysinfo system_info;
+        std::string hostname;
         std::set<std::string> mount_points;
         std::map<std::string, disk_info> disk_information;
         
         void update_mem_info();
-        double blocks_to_gb(fsblkcnt_t blocks, unsigned long bsize);
+        unsigned long blocks_to_kb(fsblkcnt_t blocks, unsigned long bsize);
         
 
     public:
@@ -64,6 +68,8 @@ class SysInfo {
          * @return void
          */
         void sample();
+        
+        std::string get_hostname() {return this->hostname;}
         
         /**
          * get amount of physical memory in kB
@@ -128,3 +134,4 @@ class SysInfo {
          */
         disk_info get_disk_info(std::string mount);
 };
+#endif
