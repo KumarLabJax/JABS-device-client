@@ -1,0 +1,5 @@
+[app]
+  update_interval = 30
+[disk]
+  video_capture_dir = /media/nvidia/TOSHIBA EXT
+
