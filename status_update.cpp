@@ -1,7 +1,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
-
+#include <iostream>
 #include <systemd/sd-daemon.h>
 
 #include <cpprest/http_client.h>
@@ -16,9 +16,9 @@ using namespace web::http;
 using namespace web::http::client;
 using namespace concurrency::streams;
 
-void send_status_update(SysInfo system_info)
+void send_status_update(SysInfo system_info, std::string api_url)
 {
-    static web::http::client::http_client client("http://bhltms-dev.jax.org/api");
+    static web::http::client::http_client client(api_url);
     
     json::value payload;
     json::value json_return;

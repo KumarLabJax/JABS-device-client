@@ -1,5 +1,6 @@
 [app]
-  update_interval = 30
+api = http://bhltms-dev.jax.org/api
+update_interval = 30
 [disk]
-  video_capture_dir = /media/nvidia/TOSHIBA EXT
+video_capture_dir = /media/nvidia/TOSHIBA EXT
 
