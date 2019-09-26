@@ -112,6 +112,6 @@ disk_info SysInfo::get_disk_info(std::string mount)
 unsigned long SysInfo::blocks_to_kb(fsblkcnt_t blocks, unsigned long bsize)
 {
     // convert number of filesystem blocks into a size in kB
-    return blocks * bsize / 1024;
+    return blocks * bsize / (1024 * 1024);
 }
 
