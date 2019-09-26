@@ -1,6 +1,5 @@
 #include <vector>
 #include <string>
-#include <sstream>
 #include <iostream>
 #include <systemd/sd-daemon.h>
 
@@ -16,6 +15,10 @@ using namespace web::http;
 using namespace web::http::client;
 using namespace concurrency::streams;
 
+// API endpoint for sending status updates
+const std::string status_update_endpoint = "/device/heartbeat";
+
+
 void send_status_update(SysInfo system_info, std::string api_uri)
 {
     static web::http::client::http_client client(api_uri);
@@ -23,9 +26,7 @@ void send_status_update(SysInfo system_info, std::string api_uri)
     json::value payload;
     json::value json_return;
     
-    std::string timestamp = datetime::utc_now().to_string(datetime::date_format::ISO_8601);
-    
-    // TODO make this configurable
+    std::string timestamp = datetime::utc_now().to_string(datetime::date_format::ISO_8601);    
     std::clog << SD_INFO << "Sending status update @ " << timestamp << std::endl;
     
     payload["name"] = web::json::value(system_info.get_hostname());
@@ -35,6 +36,7 @@ void send_status_update(SysInfo system_info, std::string api_uri)
     payload["state"] = web::json::value("IDLE");
     
     payload["sensor_status"]["camera"]["recording"] = web::json::value::boolean(false);
+    //TODO these only need to be set if the camera is recording
     //payload["sensor_status"]["camera"]["duration"] = 
     //payload["sensor_status"]["camera"]["fps"] = 
     
@@ -44,14 +46,16 @@ void send_status_update(SysInfo system_info, std::string api_uri)
     payload["system_info"]["free_ram"] = web::json::value::number(system_info.get_mem_available());
     payload["system_info"]["total_ram"] = web::json::value::number(system_info.get_mem_total());
     
-    //TODO we are going to change the API to take a list of mount points
-    //right now it assumes one mount point is being reported
+    //TODO we might change the API to take a list of mount points that are being monitored
+    //right now we only support monitoring a single drive, so there will only be one
+    //registered mount in the vector returned by system_info.get_registered_mounts()
     std::vector<std::string> mounts = system_info.get_registered_mounts();
     disk_info di = system_info.get_disk_info(mounts[0]);
     payload["system_info"]["free_disk"] = web::json::value::number(di.available);
     payload["system_info"]["total_disk"] = web::json::value::number(di.capacity);
     
-    pplx::task<void> requestTask = client.request(web::http::methods::POST, "/device/heartbeat", payload)
+    // send update to the server
+    pplx::task<void> requestTask = client.request(web::http::methods::POST, status_update_endpoint, payload)
     .then([](const web::http::http_response& response) {
         status_code status = response.status_code();
         
@@ -69,9 +73,9 @@ void send_status_update(SysInfo system_info, std::string api_uri)
                 err_msg = "Status update request failed with http status code " + status;
             }
             
-            // the webservice includes a field 'errors' for payload verification failures
-            // this is a json object where the keys are the names of params with errors
-            // and the value is an error message
+            // The webservice includes a field 'errors' for payload verification failures.
+            // This is a JSON object where the keys are the names of invalid parameters
+            // and the value is an error message.
             if (response_body.has_field("errors")) {
                 if (!err_msg.empty()) {
                     err_msg += ":  ";
@@ -93,13 +97,10 @@ void send_status_update(SysInfo system_info, std::string api_uri)
             
         } else if (status == http::status_codes::NoContent) {
             std::clog << SD_INFO << "Server responded with no content" << std::endl;
-            return;
         } else if (status == http::status_codes::OK) {
             json::value response_body = response.extract_json().get();
             // TODO parse response to see if the server wants us to do something
-        }
-        
-        
+        }      
     });
     
     try {

@@ -6,14 +6,23 @@
 #include <set>
 #include <string>
 #include <vector>
+
 #include <sys/sysinfo.h>
 #include <sys/types.h>
 
+/**
+ * @brief store information about a monitored directory
+ *
+ */
 struct disk_info {
-    unsigned long capacity;
-    unsigned long available;
+    unsigned long capacity;  ///capacity of mount in megabytes
+    unsigned long available; ///available disk space of mount in megabytes
 };
 
+/**
+ * @brief exception thrown if there is an error registering a directory to monitor
+ *
+ */
 class DiskRegistrationException: public std::exception {
   
   private: 
@@ -29,7 +38,7 @@ class DiskRegistrationException: public std::exception {
 };
 
 /**
- * system information
+ * @brief system information
  *
  * this class gathers system information such as total physical memory, memory available, 
  * available disk space, load average. This uses functionality only available on Linux 
