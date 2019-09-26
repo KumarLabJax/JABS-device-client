@@ -46,7 +46,7 @@ class SysInfo {
         std::map<std::string, disk_info> disk_information;
         
         void update_mem_info();
-        unsigned long blocks_to_kb(fsblkcnt_t blocks, unsigned long bsize);
+        unsigned long blocks_to_mb(fsblkcnt_t blocks, unsigned long bsize);
         
 
     public:

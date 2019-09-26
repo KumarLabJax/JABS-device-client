@@ -39,8 +39,8 @@ void SysInfo::sample(void)
         disk_info di;
         
         if (statvfs(m.c_str(), &buf) == 0) {
-            di.capacity = this->blocks_to_kb(buf.f_blocks, buf.f_frsize);
-            di.available = this->blocks_to_kb(buf.f_bavail, buf.f_bsize);
+            di.capacity = this->blocks_to_mb(buf.f_blocks, buf.f_frsize);
+            di.available = this->blocks_to_mb(buf.f_bavail, buf.f_bsize);
         } else {
         // TODO handle the error case. for now we just return zero for capacity/available
             di.capacity = 0;
@@ -109,9 +109,9 @@ disk_info SysInfo::get_disk_info(std::string mount)
     return di;
 }
 
-unsigned long SysInfo::blocks_to_kb(fsblkcnt_t blocks, unsigned long bsize)
+unsigned long SysInfo::blocks_to_mb(fsblkcnt_t blocks, unsigned long bsize)
 {
-    // convert number of filesystem blocks into a size in kB
-    return blocks * bsize / (1024 * 1024);
+    // convert number of filesystem blocks into a size in mB
+    return blocks * bsize / (1048576);
 }
 
