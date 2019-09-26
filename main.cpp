@@ -12,6 +12,10 @@
 #include "external/inih/INIReader.h"
 #include "status_update.h"
 
+// default update interval (in seconds) if it isn't specified in the config file
+const unsigned int default_sleep = 30;
+
+// used to notify the program that a HUP signal was received
 static volatile sig_atomic_t hup_received = 0;
 
 void signalHandler( int signum ) {
@@ -24,6 +28,15 @@ void signalHandler( int signum ) {
     }
 }
 
+/* read a configuration file and set configuration variables
+ *
+ * @param config_path string containing the path to the configuration file
+ * @param sleep_time modified to contain the "update_interval" param from the config file
+ * @param video_dir modified to contain the path to the directory to store video files in
+ * @param api_uri modified to contain the uri of the REST API
+ *
+ * @return zero on success, the value of INIReader ParseError() otherwise
+ */
 int setConfig(std::string config_path,
               unsigned int &sleep_time,
               std::string &video_dir, 
@@ -35,7 +48,7 @@ int setConfig(std::string config_path,
         return ini_reader.ParseError();
     }
     
-    sleep_time = ini_reader.GetInteger("app", "update_interval", 30);
+    sleep_time = ini_reader.GetInteger("app", "update_interval", default_sleep);
     video_dir = ini_reader.Get("disk", "video_capture_dir", "/tmp");
     api_uri = ini_reader.Get("app", "api", "");
             
@@ -48,9 +61,11 @@ int main(int argc, char **argv)
     std::string config_path;
     std::string video_capture_dir;
     std::string api_uri;
-    unsigned int sleep_time = 30;
+    unsigned int sleep_time;
     SysInfo system_info;
     
+    // setup a signal handler to catch HUP signals which indicate that the config file
+    // should be reloaded
     signal(SIGHUP, signalHandler); 
     
     
@@ -95,8 +110,10 @@ int main(int argc, char **argv)
         exit(EX_CONFIG);
     }
     
+    // notify systemd that we're done initializing
     sd_notify(0, "READY=1");
     
+    // main loop
     while (1) {
     
         // if we've received a HUP signal then reload the configuration file
@@ -121,9 +138,13 @@ int main(int argc, char **argv)
             hup_received = 0;
         }
     
+        // gather updated system information
         system_info.sample(); 
+        
+        // send updated status to the server
         send_status_update(system_info, api_uri);
         
+        // sleep until next interation
         std::this_thread::sleep_for(std::chrono::seconds(sleep_time));
     }
     
