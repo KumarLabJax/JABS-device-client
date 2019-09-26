@@ -27,7 +27,7 @@ void signalHandler( int signum ) {
 int setConfig(std::string config_path,
               unsigned int &sleep_time,
               std::string &video_dir, 
-              std::string &api_url)
+              std::string &api_uri)
 {
     INIReader ini_reader(config_path);
     
@@ -37,7 +37,7 @@ int setConfig(std::string config_path,
     
     sleep_time = ini_reader.GetInteger("app", "update_interval", 30);
     video_dir = ini_reader.Get("disk", "video_capture_dir", "/tmp");
-    api_url = ini_reader.Get("app", "api", "");
+    api_uri = ini_reader.Get("app", "api", "");
             
     return 0;
 }
@@ -47,7 +47,7 @@ int main(int argc, char **argv)
    
     std::string config_path;
     std::string video_capture_dir;
-    std::string api_url;
+    std::string api_uri;
     unsigned int sleep_time = 30;
     SysInfo system_info;
     
@@ -72,17 +72,17 @@ int main(int argc, char **argv)
     }
     
     if (config_path.empty()) {
-        std::cerr << SD_ERR << "--config <CONFIG_FILE_PATH> is a required argument\n";
+        std::clog << SD_ERR << "--config <CONFIG_FILE_PATH> is a required argument\n";
         return 1;
     }
     
-    if (setConfig(config_path, sleep_time, video_capture_dir, api_url) != 0) {
-        std::cerr << SD_ERR << "Error parsing config file" << std::endl;
+    if (setConfig(config_path, sleep_time, video_capture_dir, api_uri) != 0) {
+        std::clog << SD_ERR << "Error parsing config file" << std::endl;
         return 1;
     }   
     
-    if (api_url.empty()) {
-        std::cerr << SD_ERR << "'api_url' is a required config file parameter\n";
+    if (api_uri.empty()) {
+        std::clog << SD_ERR << "'api' is a required config file parameter\n";
         return 1;
     } 
     
@@ -102,17 +102,27 @@ int main(int argc, char **argv)
         // if we've received a HUP signal then reload the configuration file
         if (hup_received) {
             system_info.clear_mounts();
-            if (setConfig(config_path, sleep_time, video_capture_dir, api_url) != 0) {
-                std::cerr << SD_ERR << "Error parsing config file" << std::endl;
+            if (setConfig(config_path, sleep_time, video_capture_dir, api_uri) != 0) {
+                std::clog << SD_ERR << "Error parsing config file" << std::endl;
+                sd_notifyf(0, "STATUS=Failed to register mount");
                 return 1;
             }
-            system_info.register_mount(video_capture_dir);
+            
+            
+            try {
+                system_info.register_mount(video_capture_dir);
+            }
+            catch (DiskRegistrationException &e) {
+                std::clog << SD_ERR << e.what() << std::endl;
+                sd_notifyf(0, "STATUS=Failed to register mount");
+                exit(EX_CONFIG);
+            }
+            
             hup_received = 0;
         }
     
-        system_info.sample();
-        
-        send_status_update(system_info, api_url);
+        system_info.sample(); 
+        send_status_update(system_info, api_uri);
         
         std::this_thread::sleep_for(std::chrono::seconds(sleep_time));
     }

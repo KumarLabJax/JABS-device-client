@@ -16,9 +16,9 @@ using namespace web::http;
 using namespace web::http::client;
 using namespace concurrency::streams;
 
-void send_status_update(SysInfo system_info, std::string api_url)
+void send_status_update(SysInfo system_info, std::string api_uri)
 {
-    static web::http::client::http_client client(api_url);
+    static web::http::client::http_client client(api_uri);
     
     json::value payload;
     json::value json_return;
