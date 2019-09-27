@@ -21,8 +21,9 @@ SysInfo::SysInfo(void)
     // get the amount of physical RAM -- this won't change so we don't need to update
     this->mem_total_ = this->system_info.totalram * this->system_info.mem_unit / 1024;
     
+    // get the release. We use the first line of /etc/nv_tegra_release if it is available
+    // and accessible, otherwise we fall back to using the Linux Kernel release string
     std::ifstream release_file("/etc/nv_tegra_release");
-    
     if (release_file) {
         std::getline(release_file, this->release_);
     } else {
