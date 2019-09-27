@@ -41,6 +41,7 @@ void send_status_update(SysInfo system_info, std::string api_uri)
     //payload["sensor_status"]["camera"]["fps"] = 
     
     
+    payload["system_info"]["release"] = web::json::value::string(system_info.release());
     payload["system_info"]["uptime"] = web::json::value::number(system_info.uptime());
     payload["system_info"]["load"] = web::json::value::number(system_info.load());
     payload["system_info"]["free_ram"] = web::json::value::number(system_info.mem_available());

@@ -51,6 +51,7 @@ class SysInfo {
         unsigned long mem_total_;
         struct sysinfo system_info;
         std::string hostname_;
+        std::string release_;
         std::set<std::string> mount_points;
         std::map<std::string, DiskInfo> disk_information;
         
@@ -81,32 +82,39 @@ class SysInfo {
         std::string hostname() {return this->hostname_;}
         
         /**
-         * get amount of physical memory in kB
+         * @brief get amount of physical memory in kB
          *
          * @return amount of RAM
          */
         unsigned long mem_total() {return this->mem_total_;}
             
         /**
-         * get memory available in kB
+         * @brief get memory available in kB
          *
          * @return memory available 
          */
         unsigned long mem_available() {return this->mem_available_;}
         
         /**
-         * get 1 minute load average
+         * @brief get 1 minute load average
          *
          * @return floating point load average
          */
         float load() {return this->load_;}
         
         /**
-         * get uptime in seconds
+         * @brief get uptime in seconds
          *
          * @return number of seconds since boot
          */
         unsigned long uptime() {return this->system_info.uptime;}
+        
+        /**
+         * @brief get release string
+         *
+         * @return release (NVidia Tegra release string or Kernel Release)
+         */
+         std::string release() {return this->release_;}
         
         /**
          * @brief register mount point
@@ -125,7 +133,7 @@ class SysInfo {
          void ClearMounts();
         
         /**
-         * get mount points that have been registered for monitoring
+         * @brief get mount points that have been registered for monitoring
          *
          * @return a vector of strings listing all registered mounts
          */

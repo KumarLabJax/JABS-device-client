@@ -6,6 +6,8 @@
 #include <sys/statvfs.h>
 #include <unistd.h>
 #include <assert.h>
+#include <stdlib.h>
+#include <sys/utsname.h>
 
 #include "system_info.h"
 
@@ -18,6 +20,19 @@ SysInfo::SysInfo(void)
         
     // get the amount of physical RAM -- this won't change so we don't need to update
     this->mem_total_ = this->system_info.totalram * this->system_info.mem_unit / 1024;
+    
+    std::ifstream release_file("/etc/nv_tegra_release/");
+    
+    if (release_file) {
+        std::getline(release_file, this->release_);
+    } else {
+        struct utsname buf;
+        if (uname(&buf) != 0) {
+            this->release_ =  std::string("UNKNOWN");
+        } else {
+            this->release_ =  std::string(buf.release);
+        }
+    }
 }
 
 /*
@@ -42,7 +57,7 @@ void SysInfo::Sample(void)
             di.capacity = this->BlocksToMb(buf.f_blocks, buf.f_frsize);
             di.available = this->BlocksToMb(buf.f_bavail, buf.f_bsize);
         } else {
-        // TODO handle the error case. for now we just return zero for capacity/available
+            // TODO handle the error case. for now we just return zero for capacity/available
             di.capacity = 0;
             di.available = 0;
         }
