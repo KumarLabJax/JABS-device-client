@@ -1,5 +1,10 @@
 # Installation
 
+## Platform
+
+This software only support Linux. BSD, OS X (Darwin), and other Unix operating systems are
+not supported. 
+
 ## Compilation
 
 Before you can compile this program, you must initialize git submodules. This pulls in 
