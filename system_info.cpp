@@ -29,6 +29,8 @@ SysInfo::SysInfo(void)
     } else {
         struct utsname buf;
         if (uname(&buf) != 0) {
+            // nv_tegra_release wasn't available and we were unable to get the Kernel 
+            // release string. Report an unknown release
             this->release_ =  std::string("UNKNOWN");
         } else {
             this->release_ =  std::string(buf.release);
