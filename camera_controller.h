@@ -25,8 +25,10 @@ struct RecordingSessionConfig {
  * @brief camera controller abstract base class
  *
  * this class provides common functionality (starting and stopping recording 
- * threads, generating filenames, etc). It has a pure virtual function RecordVideo() that 
- * must be implemented by a derived class. 
+ * threads, generating filenames, etc). It has a pure virtual function
+ * RecordVideo() that must be implemented by a derived class. RecordVideo() is
+ * executed in a separate thread managed by CameraController.
+ * CameraController is intended to be used from a single thread.
  *
  */
 class CameraController {
@@ -52,7 +54,7 @@ class CameraController {
          *
          * @returns true if recording thread is active, false otherwise
          */
-        bool recording();
+        bool recording() {return recording_;}
         
         /**
          * @brief start the recording thread

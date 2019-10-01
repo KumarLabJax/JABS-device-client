@@ -21,8 +21,9 @@ CameraController::~CameraController() {
         StopRecording();
     }
     
-    // if the recording_thread_ pointer is still valid then it means the recording thread
-    // loop finished on its own. call join to clean up the thread. 
+    // if we are here and the recording_thread_  is still joinable then it means
+    // the recording thread loop finished on its own and set recording_ to
+    // false. Call join() to clean up the thread and avoid an exception.
     if (recording_thread_.joinable()) {
         recording_thread_.join();
     }
@@ -36,14 +37,7 @@ std::string CameraController::timestamp()
     std::tm tm = *std::localtime(&t);
     buf << std::put_time(&tm, "%Y-%m-%d_%H-%M-%S");
     return buf.str();
-
 }
-
-bool CameraController::recording()
-{
-    return recording_;
-}
-
 
 bool CameraController::StartRecording(RecordingSessionConfig config)
 {
@@ -54,7 +48,7 @@ bool CameraController::StartRecording(RecordingSessionConfig config)
     }
 
     // if a previous recording thread terminated on its own (recorded for the
-    // specified duration)
+    // specified duration) make sure to call join() so the thread is cleaned up
     if (recording_thread_.joinable()) {
         recording_thread_.join();
     }
