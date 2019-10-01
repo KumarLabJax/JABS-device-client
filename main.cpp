@@ -102,7 +102,7 @@ int main(int argc, char **argv)
     } 
     
     try {
-         system_info.register_mount(video_capture_dir);
+         system_info.AddMount(video_capture_dir);
     }
     catch (DiskRegistrationException &e) {
         std::clog << SD_ERR << e.what() << std::endl;
@@ -118,7 +118,7 @@ int main(int argc, char **argv)
     
         // if we've received a HUP signal then reload the configuration file
         if (hup_received) {
-            system_info.clear_mounts();
+            system_info.ClearMounts();
             if (setConfig(config_path, sleep_time, video_capture_dir, api_uri) != 0) {
                 std::clog << SD_ERR << "Error parsing config file" << std::endl;
                 sd_notifyf(0, "STATUS=Failed to register mount");
@@ -127,7 +127,7 @@ int main(int argc, char **argv)
             
             
             try {
-                system_info.register_mount(video_capture_dir);
+                system_info.AddMount(video_capture_dir);
             }
             catch (DiskRegistrationException &e) {
                 std::clog << SD_ERR << e.what() << std::endl;
@@ -139,12 +139,12 @@ int main(int argc, char **argv)
         }
     
         // gather updated system information
-        system_info.sample(); 
+        system_info.Sample(); 
         
         // send updated status to the server
         send_status_update(system_info, api_uri);
         
-        // sleep until next interation
+        // sleep until next iteration
         std::this_thread::sleep_for(std::chrono::seconds(sleep_time));
     }
     

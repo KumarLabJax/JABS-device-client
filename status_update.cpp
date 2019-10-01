@@ -29,7 +29,7 @@ void send_status_update(SysInfo system_info, const std::string api_uri)
     std::string timestamp = datetime::utc_now().to_string(datetime::date_format::ISO_8601);    
     std::clog << SD_INFO << "Sending status update @ " << timestamp << std::endl;
     
-    payload["name"] = web::json::value(system_info.get_hostname());
+    payload["name"] = web::json::value(system_info.hostname());
     payload["timestamp"] = web::json::value::string(timestamp);
     
     //TODO set this based on device state
@@ -41,16 +41,17 @@ void send_status_update(SysInfo system_info, const std::string api_uri)
     //payload["sensor_status"]["camera"]["fps"] = 
     
     
-    payload["system_info"]["uptime"] = web::json::value::number(system_info.get_uptime());
-    payload["system_info"]["load"] = web::json::value::number(system_info.get_load());
-    payload["system_info"]["free_ram"] = web::json::value::number(system_info.get_mem_available());
-    payload["system_info"]["total_ram"] = web::json::value::number(system_info.get_mem_total());
+    payload["system_info"]["release"] = web::json::value::string(system_info.release());
+    payload["system_info"]["uptime"] = web::json::value::number(system_info.uptime());
+    payload["system_info"]["load"] = web::json::value::number(system_info.load());
+    payload["system_info"]["free_ram"] = web::json::value::number(system_info.mem_available());
+    payload["system_info"]["total_ram"] = web::json::value::number(system_info.mem_total());
     
     //TODO we might change the API to take a list of mount points that are being monitored
     //right now we only support monitoring a single drive, so there will only be one
     //registered mount in the vector returned by system_info.get_registered_mounts()
-    std::vector<std::string> mounts = system_info.get_registered_mounts();
-    disk_info di = system_info.get_disk_info(mounts[0]);
+    std::vector<std::string> mounts = system_info.registered_mounts();
+    DiskInfo di = system_info.disk_info(mounts[0]);
     payload["system_info"]["free_disk"] = web::json::value::number(di.available);
     payload["system_info"]["total_disk"] = web::json::value::number(di.capacity);
     
