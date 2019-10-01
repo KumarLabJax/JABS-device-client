@@ -19,7 +19,7 @@ using namespace concurrency::streams;
 const std::string status_update_endpoint = "/device/heartbeat";
 
 
-void send_status_update(SysInfo system_info, std::string api_uri)
+void send_status_update(SysInfo system_info, const std::string api_uri)
 {
     static web::http::client::http_client client(api_uri);
     
