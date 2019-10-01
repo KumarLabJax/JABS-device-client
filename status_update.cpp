@@ -16,7 +16,7 @@ using namespace web::http::client;
 using namespace concurrency::streams;
 
 // API endpoint for sending status updates
-const std::string status_update_endpoint = "/device/heartbeat";
+const std::string kStatusUpdateEndpoint = "/device/heartbeat";
 
 
 void send_status_update(SysInfo system_info, const std::string api_uri)
@@ -56,7 +56,7 @@ void send_status_update(SysInfo system_info, const std::string api_uri)
     payload["system_info"]["total_disk"] = web::json::value::number(di.capacity);
     
     // send update to the server
-    pplx::task<void> requestTask = client.request(web::http::methods::POST, status_update_endpoint, payload)
+    pplx::task<void> requestTask = client.request(web::http::methods::POST, kStatusUpdateEndpoint, payload)
     .then([](const web::http::http_response& response) {
         status_code status = response.status_code();
         

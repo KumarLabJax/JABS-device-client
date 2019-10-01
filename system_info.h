@@ -79,42 +79,42 @@ class SysInfo {
          */
         void Sample();
         
-        std::string hostname() {return this->hostname_;}
+        std::string hostname() {return hostname_;}
         
         /**
          * @brief get amount of physical memory in kB
          *
          * @return amount of RAM
          */
-        unsigned long mem_total() {return this->mem_total_;}
+        unsigned long mem_total() {return mem_total_;}
             
         /**
          * @brief get memory available in kB
          *
          * @return memory available 
          */
-        unsigned long mem_available() {return this->mem_available_;}
+        unsigned long mem_available() {return mem_available_;}
         
         /**
          * @brief get 1 minute load average
          *
          * @return floating point load average
          */
-        float load() {return this->load_;}
+        float load() {return load_;}
         
         /**
          * @brief get uptime in seconds
          *
          * @return number of seconds since boot
          */
-        unsigned long uptime() {return this->system_info.uptime;}
+        unsigned long uptime() {return system_info.uptime;}
         
         /**
          * @brief get release string
          *
          * @return release (NVidia Tegra release string or Kernel Release)
          */
-         std::string release() {return this->release_;}
+        std::string release() {return release_;}
         
         /**
          * @brief register mount point
@@ -124,13 +124,13 @@ class SysInfo {
          *
          * @param path string containing path to mount
          */
-        void AddMount(std::string path);
+        void AddMount(const std::string path);
         
         /**
          * @brief clear list of registered mount points
          *
          */
-         void ClearMounts();
+        void ClearMounts();
         
         /**
          * @brief get mount points that have been registered for monitoring
@@ -147,7 +147,7 @@ class SysInfo {
          * registered prior to the last call to sample(), otherwise reported capacity and
          * available space will be zero
          *
-         * @returns a struct containing disk capacity and available space
+         * @return a struct containing disk capacity and available space
          */
         DiskInfo disk_info(std::string mount);
 };
