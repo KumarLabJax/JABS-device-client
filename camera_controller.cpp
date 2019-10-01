@@ -3,11 +3,12 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 
 #include "camera_controller.h"
 
-CameraController::CameraController(std::string directory) :
+CameraController::CameraController(const std::string &directory) :
   directory_(directory),
   stop_recording_(false),
   recording_(false) {}
@@ -41,6 +42,14 @@ std::string CameraController::timestamp()
 
 bool CameraController::StartRecording(RecordingSessionConfig config)
 {
+    // validate the config
+    if (config.file_prefix.empty()) {
+        throw std::invalid_argument("file_prefix cannot be empty");
+    }
+    if (config.duration <= std::chrono::seconds::zero()) {
+        throw std::invalid_argument("duration must be at least one second");
+    }
+
     // don't do anything if there is already an active recording thread
     if (recording_) {
         std::cerr << "Recording thread already running " << std::endl;

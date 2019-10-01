@@ -7,7 +7,14 @@
 #include <string>
 #include <thread>
 
+/**
+ * @brief collection of recording session attributes to be passed into
+ * CameraController.StartRecording() as a parameter
+ */
 struct RecordingSessionConfig {
+
+    /// target frames per second for video acquisition
+    unsigned int targetFPS = 30;
 
     /// video files will be split into hour-long segments
     bool fragment_by_hour = false;
@@ -39,7 +46,7 @@ class CameraController {
          *
          * @param directory base video capture directory
          */
-        CameraController(std::string directory);
+        CameraController(const std::string &directory);
         
         /**
          * @brief destructor for CameraController, if the destructor is called
