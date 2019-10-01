@@ -13,6 +13,8 @@
 #include <atomic>
 #include <chrono>
 #include <csignal>
+#include <cerrno>
+#include <cstring>
 #include <getopt.h>
 #include <iomanip>
 #include <iostream>
@@ -124,7 +126,8 @@ int main(int argc, char **argv)
         std::clog << SD_ERR << "Error parsing config file" << std::endl;
         return 1;
     } else if (rval == -1) {
-        std::clog << SD_ERR << "Unable to open config file" << std::endl;
+        std::clog << SD_ERR << "Unable to open config file: "
+                  << std::strerror(errno)<< std::endl;
         return 1;
     }
 
@@ -154,10 +157,11 @@ int main(int argc, char **argv)
             system_info.ClearMounts();
             rval = setConfig(config_path, sleep_time, video_capture_dir, api_uri);
             if (rval > 0) {
-                std::clog << SD_ERR << "Error parsing config file" << std::endl;
+                std::clog << SD_ERR << "Error parsing config file during reload" << std::endl;
                 return 1;
             } else if (rval == -1) {
-                std::clog << SD_ERR << "Unable to open config file" << std::endl;
+                std::clog << SD_ERR << "Unable to open config file during reload: "
+                          << std::strerror(errno)<< std::endl;
                 return 1;
             }
             
