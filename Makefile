@@ -17,4 +17,4 @@ ${MAIN}: ${OBJS} ${HEADERS}
 	${CXX} ${CXXFLAGS} -c $< -o $@
 
 clean:
-	${RM} ${PROGS} ${OBJS} *.o *~
+	${RM} ltm-device  ${OBJS} *~
