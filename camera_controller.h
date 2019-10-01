@@ -72,14 +72,14 @@ class CameraController {
         void StopRecording();
         
     protected:
-        std::string directory_;   ///directory for storing video
+        std::string directory_; ///directory for storing video
 
-        std::atomic_bool stop_recording_;  ///used to signal to the recording thread to terminate early
-        std::atomic_bool recording_;       ///are we recording video?
+        std::atomic_bool stop_recording_; ///used to signal to the recording thread to terminate early
+        std::atomic_bool recording_;      ///are we recording video?
 
-        std::thread recording_thread_;
+        std::thread recording_thread_; ///thread used to record video
         
-        std::string timestamp();
+        std::string timestamp(); ///return a timestamp formatted for use in filenames
         
     private:
         /**
@@ -87,7 +87,8 @@ class CameraController {
          *
          * Pure virtual function that must be implemented by classes that
          * inherit from this abstract base class to create a functioning
-         * CameraController.
+         * CameraController. This function will handle recording video from
+         * the camera. It should set recording when it starts and finishes.
          */
         virtual void RecordVideo(RecordingSessionConfig) = 0;
 };
