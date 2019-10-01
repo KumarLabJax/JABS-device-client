@@ -1,11 +1,23 @@
-# Installation
+# Long Term Monitoring System Readme
 
-## Platform
+## Overview
 
-This software only support Linux. BSD, OS X (Darwin), and other Unix operating systems are
-not supported. 
+This program implements a service that is run continuously on the video 
+acquisition computers. It monitors the system, periodically gathering info on 
+disk space consumption, system load, memory utilization, etc and then sends 
+that information to the LTMS webservice. It will also perform video acquisition 
+on request from the webservice.
 
-## Compilation
+## Installation
+
+### Platform
+
+This software *only* supports Linux.
+
+Windows and Unix (including but not limited to BSD and Darwin (OS X)) are not 
+supported. 
+
+### Compilation
 
 Before you can compile this program, you must initialize git submodules. This pulls in 
 a 3rd party library that we depend on. After cloning this repository, running
@@ -13,9 +25,13 @@ a 3rd party library that we depend on. After cloning this repository, running
 
 This software uses the Microsoft C++ REST SDK: https://github.com/microsoft/cpprestsdk
 
-For Ubuntu systems, `sudo apt install libcpprest-dev` is sufficient for installation.
+For Ubuntu systems, `sudo apt install libcpprest-dev` is sufficient for 
+installation of the Microsoft C++ REST SDK and its dependencies (such as Boost).
 
-## Configuring as a daemon
+The Basler pylon SDK, which we use to control our camera, is also required. It 
+can be obtained from the Basler website: https://www.baslerweb.com/en/products/software/
+
+### Configuring as a daemon
 
 This program is intended to be run as a 'new style' daemon (managed by systemd). It uses 
 `sd-notify` to let systemd know when it is finished initializing and is ready, therefore 

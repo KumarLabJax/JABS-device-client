@@ -14,7 +14,7 @@
  * @brief store information about a monitored directory
  *
  */
-struct disk_info {
+struct DiskInfo {
     unsigned long capacity;  ///capacity of mount in megabytes
     unsigned long available; ///available disk space of mount in megabytes
 };
@@ -46,16 +46,17 @@ class DiskRegistrationException: public std::exception {
  */
 class SysInfo {
     private:
-        float load;
-        unsigned long mem_available;
-        unsigned long mem_total;
+        float load_;
+        unsigned long mem_available_;
+        unsigned long mem_total_;
         struct sysinfo system_info;
-        std::string hostname;
+        std::string hostname_;
+        std::string release_;
         std::set<std::string> mount_points;
-        std::map<std::string, disk_info> disk_information;
+        std::map<std::string, DiskInfo> disk_information;
         
-        void update_mem_info();
-        unsigned long blocks_to_mb(fsblkcnt_t blocks, unsigned long bsize);
+        void UpdateMemInfo();
+        unsigned long BlocksToMb(fsblkcnt_t blocks, unsigned long bsize);
         
 
     public:
@@ -76,37 +77,44 @@ class SysInfo {
          *
          * @return void
          */
-        void sample();
+        void Sample();
         
-        std::string get_hostname() {return this->hostname;}
+        std::string hostname() {return hostname_;}
         
         /**
-         * get amount of physical memory in kB
+         * @brief get amount of physical memory in kB
          *
          * @return amount of RAM
          */
-        unsigned long get_mem_total() {return this->mem_total;}
+        unsigned long mem_total() {return mem_total_;}
             
         /**
-         * get memory available in kB
+         * @brief get memory available in kB
          *
          * @return memory available 
          */
-        unsigned long get_mem_available() {return this->mem_available;}
+        unsigned long mem_available() {return mem_available_;}
         
         /**
-         * get 1 minute load average
+         * @brief get 1 minute load average
          *
          * @return floating point load average
          */
-        float get_load() {return this->load;}
+        float load() {return load_;}
         
         /**
-         * get uptime in seconds
+         * @brief get uptime in seconds
          *
          * @return number of seconds since boot
          */
-        unsigned long get_uptime() {return this->system_info.uptime;}
+        unsigned long uptime() {return system_info.uptime;}
+        
+        /**
+         * @brief get release string
+         *
+         * @return release (NVidia Tegra release string or Kernel Release)
+         */
+        std::string release() {return release_;}
         
         /**
          * @brief register mount point
@@ -116,20 +124,20 @@ class SysInfo {
          *
          * @param path string containing path to mount
          */
-        void register_mount(std::string path);
+        void AddMount(const std::string path);
         
         /**
          * @brief clear list of registered mount points
          *
          */
-         void clear_mounts();
+        void ClearMounts();
         
         /**
-         * get mount points that have been registered for monitoring
+         * @brief get mount points that have been registered for monitoring
          *
          * @return a vector of strings listing all registered mounts
          */
-        std::vector<std::string> get_registered_mounts();
+        std::vector<std::string> registered_mounts();
         
         /**
          * @brief returns information about capacity and available disk space
@@ -139,8 +147,8 @@ class SysInfo {
          * registered prior to the last call to sample(), otherwise reported capacity and
          * available space will be zero
          *
-         * @returns a struct containing disk capacity and available space
+         * @return a struct containing disk capacity and available space
          */
-        disk_info get_disk_info(std::string mount);
+        DiskInfo disk_info(const std::string mount);
 };
 #endif

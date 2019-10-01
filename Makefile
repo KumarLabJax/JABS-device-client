@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = -std=c++11 -Wall  -g
-LDFLAGS = -lsystemd -lcpprest -lpthread -lboost_system -lssl -l crypto
+LDFLAGS = -lsystemd -lcpprest -lpthread -lboost_system -lssl -lcrypto
 
 SRCS = main.cpp status_update.cpp system_info.cpp 
 OBJS = ${SRCS:.cpp=.o}
@@ -17,4 +17,4 @@ ${MAIN}: ${OBJS} ${HEADERS}
 	${CXX} ${CXXFLAGS} -c $< -o $@
 
 clean:
-	${RM} ${PROGS} ${OBJS} *.o *~
+	${RM} ltm-device  ${OBJS} 

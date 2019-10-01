@@ -11,6 +11,6 @@
  *
  * @return void
  */
-void send_status_update(SysInfo system_info, std::string api_url);
+void send_status_update(SysInfo system_info, const std::string api_url);
 
 #endif
