@@ -149,6 +149,6 @@ class SysInfo {
          *
          * @return a struct containing disk capacity and available space
          */
-        DiskInfo disk_info(std::string mount);
+        DiskInfo disk_info(const std::string mount);
 };
 #endif

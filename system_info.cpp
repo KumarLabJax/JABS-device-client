@@ -95,7 +95,7 @@ std::vector<std::string> SysInfo::registered_mounts()
     return v;
 }
 
-DiskInfo SysInfo::disk_info(std::string mount)
+DiskInfo SysInfo::disk_info(const std::string mount)
 {
 
     DiskInfo di;
