@@ -39,9 +39,17 @@ class CameraController {
          */
         CameraController(std::string directory);
         
+        /**
+         * @brief destructor for CameraController, if the destructor is called
+         * while there is an active recording thread it will stop the thread
+         * and wait for it to terminate
+         *
+         */
         ~CameraController();
         
         /**
+         * @brief get recording status
+         *
          * @returns true if recording thread is active, false otherwise
          */
         bool recording();
@@ -52,20 +60,35 @@ class CameraController {
          * @returns true if thread is started, false otherwise
          */
         bool StartRecording(RecordingSessionConfig config);
+
+        /**
+         * @brief stop recording thread
+         *
+         * Signal the recording thread to stop and waits for the thread to
+         * finish. This is a no op if the recording thread has not been started
+         * and is also safe to call if the recording thread terminates on its
+         * own.
+         */
         void StopRecording();
         
     protected:
-        std::string directory_;
-        std::string file_prefix_;
-        
-        std::atomic_bool stop_recording_;
-        std::atomic_bool recording_;
+        std::string directory_;   ///directory for storing video
 
-        std::unique_ptr<std::thread> recording_thread_;
+        std::atomic_bool stop_recording_;  ///used to signal to the recording thread to terminate early
+        std::atomic_bool recording_;       ///are we recording video?
+
+        std::thread recording_thread_;
         
         std::string timestamp();
         
     private:
+        /**
+         * @brief function executed in a thread by StartRecording()
+         *
+         * Pure virtual function that must be implemented by classes that
+         * inherit from this abstract base class to create a functioning
+         * CameraController.
+         */
         virtual void RecordVideo(RecordingSessionConfig) = 0;
 };
 #endif

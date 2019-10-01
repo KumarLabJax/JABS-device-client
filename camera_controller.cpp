@@ -23,8 +23,8 @@ CameraController::~CameraController() {
     
     // if the recording_thread_ pointer is still valid then it means the recording thread
     // loop finished on its own. call join to clean up the thread. 
-    if (recording_thread_) {
-        recording_thread_->join();
+    if (recording_thread_.joinable()) {
+        recording_thread_.join();
     }
 }
 
@@ -53,8 +53,7 @@ bool CameraController::StartRecording(RecordingSessionConfig config)
         return false;
     }
     
-    recording_thread_ = std::unique_ptr<std::thread>(new std::thread(&CameraController::RecordVideo, this, config));
-    recording_ = true;
+    recording_thread_ = std::thread(&CameraController::RecordVideo, this, config);
     return true;
 }
 
@@ -64,11 +63,11 @@ void CameraController::StopRecording() {
         stop_recording_ = true;
         
         // wait for the recording thread to finish
-        recording_thread_->join();
+        recording_thread_.join();
         
         // reset the unique pointer so the destructor knows if it needs to call join
         // on the thread
-        recording_thread_.reset();
+        //recording_thread_.reset();
         recording_ = false;
     }
 }
