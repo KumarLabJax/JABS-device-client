@@ -23,7 +23,7 @@ public:
 
     /**
      * @brief collection of recording session attributes to be passed into
-     * CameraController.StartRecording() as a parameter
+     * StartRecording() as a parameter
      */
     struct RecordingSessionConfig {
 
@@ -92,12 +92,13 @@ public:
     void StopRecording();
 
 protected:
-    std::string directory_;           ///< directory for storing video
+    const std::string directory_;     ///< directory for storing video
     std::atomic_bool stop_recording_; ///< used to signal to the recording thread to terminate early
     std::atomic_bool recording_;      ///< are we recording video?
-    std::thread recording_thread_;    ///< thread used to record video
-    std::atomic<std::chrono::time_point<std::chrono::system_clock>> session_start_;
+    std::thread recording_thread_;
     std::chrono::seconds elapsed_time_;   ///< duration of completed recording session
+    std::atomic<std::chrono::time_point<std::chrono::system_clock>> session_start_;
+
     std::string timestamp();          ///< return a timestamp formatted for use in filenames
 
 private:
