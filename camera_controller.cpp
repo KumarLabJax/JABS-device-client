@@ -56,13 +56,18 @@ bool CameraController::StartRecording(RecordingSessionConfig config)
         return false;
     }
 
+    std::cerr << "starting thread\n";
+
     // if a previous recording thread terminated on its own (recorded for the
     // specified duration) make sure to call join() so the thread is cleaned up
     if (recording_thread_.joinable()) {
+        std::cerr << "foo" << std::endl;
         recording_thread_.join();
     }
     
     recording_thread_ = std::thread(&CameraController::RecordVideo, this, config);
+    recording_ = true;
+
     return true;
 }
 

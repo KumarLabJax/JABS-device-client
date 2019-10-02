@@ -7,7 +7,6 @@ namespace chrono = std::chrono;
 
 void PylonCameraController::RecordVideo(RecordingSessionConfig config) {
 
-    recording_ = true;
     auto session_start = chrono::system_clock::now();
 
     while(1) {
