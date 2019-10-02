@@ -22,8 +22,7 @@ struct RecordingSessionConfig {
     /// filename prefix
     std::string file_prefix;
 
-    /// recording session duration, can be any std::chrono::duration that can be converted
-    /// to seconds
+    /// recording session duration
     std::chrono::seconds duration;
 };
 
