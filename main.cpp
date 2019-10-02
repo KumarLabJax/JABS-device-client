@@ -25,6 +25,7 @@
 #include "external/inih/INIReader.h"
 #include "status_update.h"
 #include "system_info.h"
+#include "ltm_exceptions.h"
 
 // default update interval (in seconds) if it isn't specified in the config file
 const unsigned int kDefaultSleep = 30;
@@ -38,10 +39,7 @@ void signalHandler( int signum ) {
             hup_received = true;
             break;
         default:
-            //TODO raise an exception here -- this indicates a programming error
-            std::clog << SD_ERR
-                      << "signalHandler() does not implement this signal "
-                      << signum << std::endl;
+            throw NotImplementedException();
     }
 }
 
