@@ -1,5 +1,4 @@
 #include <chrono>
-#include <ctime>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -11,7 +10,8 @@
 CameraController::CameraController(const std::string &directory) :
   directory_(directory),
   stop_recording_(false),
-  recording_(false) {}
+  recording_(false),
+  elapsed_time_(std::chrono::seconds(0)){}
   
 CameraController::~CameraController() {
     
@@ -34,7 +34,7 @@ std::string CameraController::timestamp()
 {
     std::stringstream buf;
     
-    std::time_t t = std::time(nullptr);
+    std::time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     std::tm tm = *std::localtime(&t);
     buf << std::put_time(&tm, "%Y-%m-%d_%H-%M-%S");
     return buf.str();
@@ -71,17 +71,19 @@ bool CameraController::StartRecording(RecordingSessionConfig config)
     return true;
 }
 
-
 void CameraController::StopRecording() {
     if (recording_) {
         stop_recording_ = true;
-        
         // wait for the recording thread to finish
         recording_thread_.join();
-        
-        // reset the unique pointer so the destructor knows if it needs to call join
-        // on the thread
-        //recording_thread_.reset();
-        recording_ = false;
     }
+}
+
+std::chrono::seconds CameraController::elapsed_time()
+{
+    if (recording_) {
+        return std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::system_clock::now() - session_start_.load());
+    }
+    return elapsed_time_;
 }

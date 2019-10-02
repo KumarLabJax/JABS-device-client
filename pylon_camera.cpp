@@ -7,12 +7,11 @@ namespace chrono = std::chrono;
 
 void PylonCameraController::RecordVideo(RecordingSessionConfig config) {
 
-    auto session_start = chrono::system_clock::now();
+    session_start_.store(chrono::system_clock::now());
 
     while(1) {
         auto elapsed = chrono::duration_cast<chrono::seconds>(
-            chrono::system_clock::now() - session_start
-        );
+            chrono::system_clock::now() - session_start_.load());
         
         // check to see if we've completed the specified duration or we've been told
         // to terminate early
@@ -23,5 +22,7 @@ void PylonCameraController::RecordVideo(RecordingSessionConfig config) {
         //TODO  implement me
         
     }
+    elapsed_time_ = chrono::duration_cast<chrono::seconds>(
+        chrono::system_clock::now() - session_start_.load());
     recording_ = false;
 }

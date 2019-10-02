@@ -8,41 +8,40 @@
 #include <thread>
 
 /**
- * @brief collection of recording session attributes to be passed into
- * CameraController.StartRecording() as a parameter
- */
-struct RecordingSessionConfig {
-
-    /// target frames per second for video acquisition
-    unsigned int targetFPS = 30;
-
-    /// video files will be split into hour-long segments
-    bool fragment_by_hour = false;
-
-    /// filename prefix
-    std::string file_prefix;
-
-    /**
-     * duration of recording session, can be specified in units greater than
-     * seconds and conversion to seconds will happen automatically
-     */
-    std::chrono::seconds duration;
-};
-
-
-/**
  * @brief camera controller abstract base class
  *
- * this class provides common functionality (starting and stopping recording 
- * threads, generating filenames, etc). It has a pure virtual function
- * RecordVideo() that must be implemented by a derived class. RecordVideo() is
- * executed in a separate thread managed by CameraController.
+ * This class provides common functionality for controlling a camera (starting
+ * and stopping recording threads, generating filenames, etc). It has a pure
+ * virtual function RecordVideo() that must be implemented by a derived class.
+ * RecordVideo() is executed in a separate thread managed by CameraController.
  * CameraController is intended to be used from a single thread.
  *
  */
 class CameraController {
 
 public:
+
+    /**
+     * @brief collection of recording session attributes to be passed into
+     * CameraController.StartRecording() as a parameter
+     */
+    struct RecordingSessionConfig {
+
+        /// target frames per second for video acquisition
+        unsigned int targetFPS = 30;
+
+        /// video files will be split into hour-long segments
+        bool fragment_by_hour = false;
+
+        /// filename prefix. All files created by this session will start with this
+        /// string
+        std::string file_prefix;
+
+        /// duration of recording session, can be specified in units greater than
+        /// seconds and conversion to seconds will happen automatically
+        std::chrono::seconds duration;
+    };
+
     /**
      * @brief construct a new CameraController
      *
@@ -73,6 +72,16 @@ public:
     bool StartRecording(RecordingSessionConfig config);
 
     /**
+     * @brief return the duration of the recording session
+     *
+     * returns the duration of the recording session in seconds. If there is
+     * no active session then it returns the duration of the last session
+     *
+     * @return time of recording session in seconds
+     */
+    std::chrono::seconds elapsed_time();
+
+    /**
      * @brief stop recording thread
      *
      * Signal the recording thread to stop and waits for the thread to
@@ -83,14 +92,13 @@ public:
     void StopRecording();
 
 protected:
-    std::string directory_; ///directory for storing video
-
-    std::atomic_bool stop_recording_; ///used to signal to the recording thread to terminate early
-    std::atomic_bool recording_;      ///are we recording video?
-
-    std::thread recording_thread_; ///thread used to record video
-
-    std::string timestamp(); ///return a timestamp formatted for use in filenames
+    std::string directory_;           ///< directory for storing video
+    std::atomic_bool stop_recording_; ///< used to signal to the recording thread to terminate early
+    std::atomic_bool recording_;      ///< are we recording video?
+    std::thread recording_thread_;    ///< thread used to record video
+    std::atomic<std::chrono::time_point<std::chrono::system_clock>> session_start_;
+    std::chrono::seconds elapsed_time_;   ///< duration of completed recording session
+    std::string timestamp();          ///< return a timestamp formatted for use in filenames
 
 private:
     /**
