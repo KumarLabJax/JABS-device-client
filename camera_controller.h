@@ -93,11 +93,11 @@ public:
 
 protected:
     const std::string directory_;     ///< directory for storing video
-    std::atomic_bool stop_recording_; ///< used to signal to the recording thread to terminate early
-    std::atomic_bool recording_;      ///< are we recording video?
+    std::atomic_bool stop_recording_ {false}; ///< used to signal to the recording thread to terminate early
+    std::atomic_bool recording_ {false};      ///< are we recording video?
     std::thread recording_thread_;
     std::chrono::seconds elapsed_time_;   ///< duration of completed recording session
-    std::atomic<std::chrono::time_point<std::chrono::system_clock>> session_start_;
+    std::atomic<std::chrono::high_resolution_clock::duration> session_start_;
 
     std::string timestamp();          ///< return a timestamp formatted for use in filenames
 

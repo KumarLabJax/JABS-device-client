@@ -7,11 +7,7 @@
 
 #include "camera_controller.h"
 
-CameraController::CameraController(const std::string &directory) :
-  directory_(directory),
-  stop_recording_(false),
-  recording_(false),
-  elapsed_time_(std::chrono::seconds(0)){}
+CameraController::CameraController(const std::string &directory)  : directory_(directory) {}
   
 CameraController::~CameraController() {
     
@@ -83,7 +79,7 @@ std::chrono::seconds CameraController::elapsed_time()
 {
     if (recording_) {
         return std::chrono::duration_cast<std::chrono::seconds>(
-            std::chrono::system_clock::now() - session_start_.load());
+            std::chrono::system_clock::now().time_since_epoch() - session_start_.load());
     }
     return elapsed_time_;
 }
