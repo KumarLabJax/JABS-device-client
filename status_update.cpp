@@ -7,6 +7,7 @@
 #include <cpprest/json.h> 
 #include <cpprest/asyncrt_utils.h>
 
+#include "status_update.h"
 #include "system_info.h"
 
 using namespace utility;
