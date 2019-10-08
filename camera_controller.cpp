@@ -28,12 +28,35 @@ CameraController::~CameraController() {
 
 std::string CameraController::timestamp()
 {
+    return timestamp(std::chrono::system_clock::now());
+}
+
+std::string CameraController::timestamp(std::chrono::time_point<std::chrono::system_clock> time)
+{
     std::stringstream buf;
-    
-    std::time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    std::time_t t = std::chrono::system_clock::to_time_t(time);
     std::tm tm = *std::localtime(&t);
     buf << std::put_time(&tm, "%Y-%m-%d_%H-%M-%S");
     return buf.str();
+}
+
+std::string CameraController::DateString(std::chrono::time_point<std::chrono::system_clock> time)
+{
+    std::stringstream buf;
+    std::time_t t = std::chrono::system_clock::to_time_t(time);
+    std::tm tm = *std::localtime(&t);
+    buf << std::put_time(&tm, "%Y-%m-%d");
+    return buf.str();
+}
+
+int CameraController::GetCurrentHour(std::chrono::time_point<std::chrono::system_clock> time){
+    std::time_t t = std::chrono::system_clock::to_time_t(time);
+    std::tm tm = *std::localtime(&t);
+    return tm.tm_hour;
+}
+
+int CameraController::GetCurrentHour(){
+    return GetCurrentHour(std::chrono::system_clock::now());
 }
 
 bool CameraController::StartRecording(RecordingSessionConfig config)
@@ -46,18 +69,21 @@ bool CameraController::StartRecording(RecordingSessionConfig config)
         throw std::invalid_argument("duration must be at least one second");
     }
 
+    elapsed_time_ = std::chrono::seconds::zero();
+
     // don't do anything if there is already an active recording thread
     if (recording_) {
         std::cerr << "Recording thread already running " << std::endl;
         return false;
     }
 
-    std::cerr << "starting thread\n";
+    // avoid resizing moving_avg_ during acquisition loop since we already
+    // know the size
+    moving_avg_.reserve(config.target_fps);
 
     // if a previous recording thread terminated on its own (recorded for the
     // specified duration) make sure to call join() so the thread is cleaned up
     if (recording_thread_.joinable()) {
-        std::cerr << "foo" << std::endl;
         recording_thread_.join();
     }
     
@@ -82,4 +108,28 @@ std::chrono::seconds CameraController::elapsed_time()
             std::chrono::system_clock::now().time_since_epoch() - session_start_.load());
     }
     return elapsed_time_;
+}
+
+const std::string CameraController::error_string()
+{
+    return err_msg_;
+}
+
+int CameraController::recording_error()
+{
+    return recording_err_state_;
+}
+
+std::string CameraController::MakeFilePath(std::chrono::time_point<std::chrono::system_clock> time, std::string filename)
+{
+    std::string path = directory_;
+
+    if (directory_.back() == '/') {
+        path.append(DateString(time) + "/");
+    } else {
+        path.append("/" + DateString(time) + "/");
+    }
+    path.append(filename);
+
+    return path;
 }

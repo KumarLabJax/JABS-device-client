@@ -15,9 +15,12 @@ on request from the webservice.
 This software *only* supports Linux.
 
 Windows and Unix (including but not limited to BSD and Darwin (OS X)) are not 
-supported. 
+currently supported. 
 
 ### Compilation
+
+A C++11 compliant compiler is required. Any recent version of gcc or clang
+should be sufficient.
 
 Before you can compile this program, you must initialize git submodules. This pulls in 
 a 3rd party library that we depend on. After cloning this repository, running
@@ -30,6 +33,10 @@ installation of the Microsoft C++ REST SDK and its dependencies (such as Boost).
 
 The Basler pylon SDK, which we use to control our camera, is also required. It 
 can be obtained from the Basler website: https://www.baslerweb.com/en/products/software/
+
+You will also need libavcodec, libavformat, libavfilter, and their development header files. 
+On Ubuntu, `sudo apt install libavcodec-dev libavcodec-dev libavfilter-dev` will
+install these and their dependencies.
 
 ### Configuring as a daemon
 
