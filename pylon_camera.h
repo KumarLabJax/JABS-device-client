@@ -24,17 +24,16 @@ private:
      */
     class CameraConfiguration : public Pylon::CConfigurationEventHandler {
     public:
-        CameraConfiguration(int frame_width, int frame_height, int target_fps, std::string pixel_format,
-                            std::string auto_gain, bool enablePGI);
+        CameraConfiguration(int frame_width, int frame_height, int target_fps,
+                            const std::string& pixel_format, bool enablePGI);
         void OnOpened(Pylon::CInstantCamera &camera);
 
     private:
-        int frame_width_;
-        int frame_height_;
-        int target_fps_;
-        std::string pixel_format_;
-        std::string auto_gain_;
-        bool enable_pgi_;
+        int frame_width_;                      ///< frame width in pixels
+        int frame_height_;                     ///< frame height in pixels
+        int target_fps_;                       ///< target frames per second
+        std::string pixel_format_;  ///< pixel format
+        bool enable_pgi_;                      ///< enable pgi flag
     };
 
     // private methods
@@ -44,7 +43,7 @@ private:
      *
      * @param config RecordingSessionConfig
      */
-    void RecordVideo(RecordingSessionConfig config);
+    void RecordVideo(const RecordingSessionConfig& config);
 
 };
 #endif

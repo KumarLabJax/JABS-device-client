@@ -4,52 +4,19 @@
 #include <atomic>
 #include <chrono>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
-#include <mutex>
 #include <vector>
 
+#include "pixel_types.h"
 
-
-namespace pixel_type {
-    class PixelType {
-    public:
-        operator std::string() const
-        {
-            return str_;
-        }
-    protected:
-        const std::string str_;
-    };
-
-    class YUV420P: public PixelType {
-    protected:
-        const std::string str_ = "YUV420P";
-    };
-}
-
-namespace codec {
-    class CodecType {
-    public:
-        operator std::string() const
-        {
-            return str_;
-        }
-    protected:
-        const std::string str_;
-    };
-
-    class MPEG4 : public CodecType {
-    protected:
-        const std::string str_ = "mpeg4";
-    };
-
-    class LIBX264 : public CodecType {
-    protected:
-        const std::string str_ = "libx264";
-    };
-}
-
+namespace codecs {
+static std::vector<std::string> codec_names({"mpeg4", "libx264"});
+const static std::string MPEG4 = "mpeg4";
+const static std::string LIBX264 = "libx264";
+bool Validate(std::string type_name);
+} // namespace codecs
 
 
 /**
@@ -68,33 +35,115 @@ public:
 
     /**
      * @brief collection of recording session attributes to be passed into
-     * StartRecording() as a parameter
+     * StartRecording() as a parameter.
+     *
+     * Setter functions added to perform validation -- any setter that does
+     * parameter validation will throw a std::invalid_argument exception for
+     * invalid values.
+     *
      */
-    struct RecordingSessionConfig {
+    class RecordingSessionConfig {
+    public:
+        /// get target frames per second
+        unsigned int target_fps() const {return target_fps_;}
 
+        /// get fragment flag
+        bool fragment_by_hour() const {return fragment_by_hour_;}
+
+        /// get file prefix string
+        const std::string& file_prefix() const {return file_prefix_;}
+
+        /// get duration of session
+        std::chrono::seconds duration() const {return duration_;}
+
+        /// get frame height
+        size_t frame_height() const {return frame_height_;}
+
+        /// get frame width
+        size_t frame_width() const {return frame_width_;}
+
+        /// get pixel format as string
+        const std::string& pixel_format() const {return pixel_format_;}
+
+        /// get codec name to use for encoding
+        const std::string& codec() const {return codec_;}
+
+        /// get the compression target preset name
+        const std::string& compression_target() const {return compression_target_;}
+
+        /// get the constant rate factor (CRF)
+        unsigned int crf() const {return crf_;}
+
+        /// get filtering flag
+        bool apply_filter() const {return apply_filter_;}
+
+        /// set target fps
+        void set_target_fps(unsigned int target_fps);
+
+        /// set fragment flag
+        void set_fragment_by_hour(bool fragment) {fragment_by_hour_ = fragment;}
+
+        /// set file prefix
+        void set_file_prefix(const std::string& prefix);
+
+        /// set session duration in seconds
+        void set_duration(std::chrono::seconds duration);
+
+        /// set frame height
+        void set_frame_height(size_t height);
+
+        /// set frame width
+        void set_frame_width(size_t width);
+
+        /// set pixel format
+        void set_pixel_format(const std::string &format);
+
+        /// set codec
+        void set_codec(std::string codec);
+
+        /// set compression preset
+        void set_compression_target(const std::string &target);
+
+        /// set constant rate factor (CRF)
+        void set_crf(unsigned int crf);
+
+        /// set filtering flag
+        void set_apply_filter(bool apply_filter) {apply_filter_ = apply_filter;}
+
+    private:
         /// target frames per second for video acquisition
-        unsigned int target_fps = 60;
+        unsigned int target_fps_ = 60;
 
         /// video files will be split into hour-long segments
-        bool fragment_by_hour = false;
+        bool fragment_by_hour_ = false;
 
         /// filename prefix. All files created by this session will start with this
         /// string
-        std::string file_prefix;
+        std::string file_prefix_;
 
         /// duration of recording session, can be specified in units greater than
         /// seconds and conversion to seconds will happen automatically
-        std::chrono::seconds duration;
+        std::chrono::seconds duration_;
 
-        size_t frame_height = 800;
-        size_t frame_width = 800;
+        /// height of frame in pixels
+        size_t frame_height_ = 800;
 
-        pixel_type::PixelType pixel_format = pixel_type::YUV420P();
-        codec::CodecType codec = codec::LIBX264();
-        std::string compression_target = "veryslow";
-        int compression = 12;
-        bool lossless = false;
-        bool apply_filter = true;
+        /// width of frame in pixels
+        size_t frame_width_ = 800;
+
+        /// pixel format
+        std::string pixel_format_ = pixel_types::YUV420P;
+
+        /// codec used for video encoding
+        std::string codec_ = codecs::LIBX264;
+
+        /// compression preset
+        std::string compression_target_ = "veryfast";
+
+        /// compression Constant Rate Factor (CRF) 0 = lossless, 51 = worst possible quality
+        unsigned int crf_ = 11;
+
+        bool apply_filter_ = true;
     };
 
     /**
@@ -124,7 +173,17 @@ public:
      *
      * @returns true if thread is started, false otherwise
      */
-    bool StartRecording(RecordingSessionConfig config);
+    bool StartRecording(const RecordingSessionConfig &config);
+
+    /**
+     * @brief stop recording thread
+     *
+     * Signal the recording thread to stop and waits for the thread to
+     * finish. This is a no op if the recording thread has not been started
+     * and is also safe to call if the recording thread terminates on its
+     * own.
+     */
+    void StopRecording();
 
     /**
      * @brief return the duration of the recording session
@@ -137,14 +196,13 @@ public:
     std::chrono::seconds elapsed_time();
 
     /**
-     * @brief stop recording thread
+     * @brief get the average frames per second
      *
-     * Signal the recording thread to stop and waits for the thread to
-     * finish. This is a no op if the recording thread has not been started
-     * and is also safe to call if the recording thread terminates on its
-     * own.
+     * uses a moving window average to calculate frames per second
+     *
+     * @return average frames per second
      */
-    void StopRecording();
+    double avg_fps();
 
     /**
      * @brief get error string set by recording thread
@@ -170,19 +228,61 @@ protected:
     const std::string directory_;     ///< directory for storing video
     std::atomic_bool stop_recording_ {false}; ///< used to signal to the recording thread to terminate early
     std::atomic_bool recording_ {false};      ///< are we recording video?
-    std::thread recording_thread_;
+    std::thread recording_thread_;            ///< current recording thread
     std::chrono::seconds elapsed_time_;   ///< duration of completed recording session
     std::atomic<std::chrono::high_resolution_clock::duration> session_start_;
-    std::vector<double> moving_avg_;
-    std::string err_msg_;
-    int recording_err_state_;
-    std::mutex mutex_;
+    std::vector<double> moving_avg_;  ///<  buffer storing fps for last N frames captured where N is the target framerate
+    std::string err_msg_;  ///< error message if recording_err_
+    int err_state_;       ///< error state of last completed recording session
+    std::mutex mutex_;    ///< mutex for protecting some variables shared by controlling thread and recording thread
 
-    std::string timestamp();          ///< return a timestamp formatted for use in filenames
+
+    /**
+     * @brief generates a timestamp string for use in filenames.
+     *
+     * generates a string with the format YYYY-MM-DD_HH-MM-SS
+     *
+     * @param time system clock time
+     * @return
+     */
     std::string timestamp(std::chrono::time_point<std::chrono::system_clock> time);
+
+    /**
+     * @brief generate a timestamp string with the current time
+     *
+     * generates a string with the format YYYY-MM-DD_HH-MM-SS using the current time
+     *
+     * @return
+     */
+    std::string timestamp();
+
+    /**
+     * @brief generates a date string in the format YYYY-MM-DD
+     *
+     * @param time system time to use to generate date string
+     * @return
+     */
     std::string DateString(std::chrono::time_point<std::chrono::system_clock> time);
+
+    /**
+     * @brief make a file path using the recording directory, a date string, and a given filename
+     * @param time sytem time to use to generate a date string
+     * @param filename filename
+     * @return
+     */
     std::string MakeFilePath(std::chrono::time_point<std::chrono::system_clock> time, std::string filename);
+
+    /**
+     * @brief get hour using a given system clock time
+     * @param time current time
+     * @return integer hour
+     */
     int GetCurrentHour(std::chrono::time_point<std::chrono::system_clock> time);
+
+    /**
+     * @brief get hour using current time
+     * @return integer hour
+     */
     int GetCurrentHour();
 
 
@@ -195,6 +295,6 @@ private:
      * CameraController. This function will handle recording video from
      * the camera. It should set recording when it starts and finishes.
      */
-    virtual void RecordVideo(RecordingSessionConfig) = 0;
+    virtual void RecordVideo(const RecordingSessionConfig&) = 0;
 };
 #endif

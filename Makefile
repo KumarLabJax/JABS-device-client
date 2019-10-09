@@ -7,9 +7,9 @@ LDLIBS = -lsystemd -lcpprest -lpthread -lboost_system -lssl -lcrypto
 DEPDIR := .deps
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.d
 
-SRCS = main.cpp status_update.cpp system_info.cpp camera_controller.cpp pylon_camera.cpp video_writer.cpp
+SRCS = main.cpp status_update.cpp system_info.cpp camera_controller.cpp pylon_camera.cpp video_writer.cpp pixel_types.cpp
 OBJS = $(SRCS:.cpp=.o)
-HEADERS = status_update.h system_info.h ltm_exceptions.h video_writer.h
+HEADERS = status_update.h system_info.h ltm_exceptions.h video_writer.h pixel_types.h
 
 MAIN = ltm-device
 
@@ -31,8 +31,5 @@ clean:
 	$(RM) ltm-device  $(OBJS) $(DEPFILES)
 
 $(DEPFILES):
-
-recorder_test: test.o camera_controller.o pylon_camera.o video_writer.o
-	$(CXX) $(CPPFLAGS) test.o camera_controller.o pylon_camera.o video_writer.o -o test $(LDFLAGS) $(LDLIBS)
 
 include $(wildcard $(DEPFILES))
