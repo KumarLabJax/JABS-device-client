@@ -17,8 +17,6 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
 {
     err_state_ = 0;
 
-    //std::unique_ptr<uint8_t> frame_data(new uint8_t[config.frame_width * config.frame_height]);
-
     std::string filename = config.file_prefix();
     std::string timestamp_filename = filename;
     std::string timestamp_start_filename = filename;
@@ -26,8 +24,8 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
     int next_hour;
     size_t current_frame = 0;   // frame number in the current file
     size_t frames_captured = 0; // total number of frames captured in session
-    uint64_t first_click;
-    uint64_t last_click = 0;
+    uint64_t first_click;       // timestamp of first frame captured
+    uint64_t last_click = 0;    // timestamp of last frame captured
     double current_fps;
 
     timestamp_filename.append("_timestamps.txt");
@@ -37,6 +35,14 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
     std::ofstream timestamp_file (timestamp_filename, std::ofstream::out);
     std::ofstream timestamp_start_file (timestamp_start_filename, std::ofstream::out);
 
+    if (!timestamp_file || ! timestamp_start_file) {
+        err_state_ = 1;
+        err_msg_ = "error opening timestamp files";
+        recording_ = false;
+        return;
+    }
+
+    // set format for floating point output to the timestamp file
     timestamp_file << std::fixed << std::setprecision(6);
 
     PylonAutoInitTerm autoInitTerm;
@@ -44,16 +50,16 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
     CGrabResultPtr ptrGrabResult;
     CBaslerGigEInstantCamera camera;
 
+    // attach and configure the camera
     CameraConfiguration customConfig(config.frame_width(), config.frame_height(), config.target_fps(), config.pixel_format(), false);
-
     try {
         camera.Attach(CTlFactory::GetInstance().CreateFirstDevice());
         camera.RegisterConfiguration(&customConfig, RegistrationMode_ReplaceAll, Cleanup_None);
         camera.MaxNumBuffer = 15;
         camera.Open();
     } catch (const GenericException &e) {
+        // couldn't attach to or configure the camera. set error string and return
         recording_ = false;
-        // set some member variables so the controlling thread knows what's going on
         err_msg_ = "unable to configure camera: " + std::string(e.what());
         err_state_ = 1;
         return;
@@ -65,6 +71,7 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
     session_start_.store(start_time.time_since_epoch());
     timestamp_start_file << "Recording started at Local Time: " << std::ctime(&t);
 
+    // setup the filename for the video file
     filename = MakeFilePath(start_time, config.file_prefix());
     if (config.fragment_by_hour()) {
         next_hour = (GetCurrentHour(start_time) + 1) % 24;
@@ -73,9 +80,11 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
 
     VideoWriter video_writer(filename, config);
 
+    // camera is configured and we're ready to start capturing video
     // start grabbing frames
     camera.StartGrabbing(GrabStrategy_OneByOne);
-    // main acquisition loop
+
+    // main recording loop
     while(1) {
         auto elapsed = chrono::duration_cast<chrono::seconds>(
             chrono::system_clock::now().time_since_epoch() - session_start_.load());
@@ -90,7 +99,7 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
         try {
             camera.RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
         } catch (const GenericException &e) {
-            //bailing out -- should we retry?
+            // bailing out -- should we retry?
             err_msg_ = "Timeout retrieving frame: " + std::string(e.what());
             err_state_ = 1;
             break;
@@ -102,13 +111,19 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
             continue;
         }
 
+        // got a frame from the camera
+        // get a pointer to the image buffer and
         auto pImageBuffer = (uint8_t *)ptrGrabResult->GetBuffer();
+        // get the timestamp of the frame
         auto frame_timestamp = ptrGrabResult->GetTimeStamp();
 
+        // record timestamp of first frame
         if (frames_captured == 0) {
             first_click = frame_timestamp;
         }
 
+        // calculate current framerate and add to the vector used for computing
+        // the moving average
         current_fps = 1.0/((frame_timestamp - last_click)/125000000.0);
         {
             std::lock_guard<std::mutex> lock(mutex_);
@@ -118,6 +133,7 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
             last_click = frame_timestamp;
         }
 
+        // record timestamp of current frame, as an offset from the first timestamp
         // NOTE: Camera tick is measured at 125MHz, so divide by 125,000,000 to get the value in seconds
         timestamp_file << (frame_timestamp - first_click) / 125000000.0 << std::endl;
 
@@ -144,7 +160,6 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
             current_frame = 0;
         }
 
-        // This is auto-applied when leaving scope, but can't hurt
         ptrGrabResult.Release();
     }
 

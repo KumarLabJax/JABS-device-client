@@ -16,7 +16,7 @@ bool Validate(std::string name)
 }
 } //namespace codecs
 
-CameraController::CameraController(const std::string &directory)  : directory_(directory) {}
+CameraController::CameraController(const std::string &directory) : directory_(directory) {}
   
 CameraController::~CameraController() {
     
@@ -70,25 +70,26 @@ int CameraController::GetCurrentHour(){
 
 bool CameraController::StartRecording(const RecordingSessionConfig& config)
 {
-    elapsed_time_ = std::chrono::seconds::zero();
-
     // don't do anything if there is already an active recording thread
     if (recording_) {
         std::cerr << "Recording thread already running " << std::endl;
         return false;
     }
 
+    elapsed_time_ = std::chrono::seconds::zero();
+
     // avoid resizing moving_avg_ during acquisition loop since we already
     // know the size
     auto window_size = config.target_fps();
     moving_avg_.reserve(window_size);
 
-    // if a previous recording thread terminated on its own (recorded for the
-    // specified duration) make sure to call join() so the thread is cleaned up
+    // if a previous recording thread terminated on its own make sure to call
+    // join() so the thread is cleaned up
     if (recording_thread_.joinable()) {
         recording_thread_.join();
     }
 
+    // start recording thread
     recording_ = true;
     recording_thread_ = std::thread(&CameraController::RecordVideo, this, config);
 
@@ -97,6 +98,7 @@ bool CameraController::StartRecording(const RecordingSessionConfig& config)
 
 void CameraController::StopRecording() {
     if (recording_) {
+        // use atomic bool to signal to the recording thread to stop
         stop_recording_ = true;
         // wait for the recording thread to finish
         recording_thread_.join();
@@ -106,9 +108,12 @@ void CameraController::StopRecording() {
 std::chrono::seconds CameraController::elapsed_time()
 {
     if (recording_) {
+        // recording thread is still running, use session_start_ and current
+        // time to calculate a duration in seconds
         return std::chrono::duration_cast<std::chrono::seconds>(
             std::chrono::system_clock::now().time_since_epoch() - session_start_.load());
     }
+    // no active thread, return the length of the last recording session
     return elapsed_time_;
 }
 
@@ -136,15 +141,22 @@ std::string CameraController::MakeFilePath(std::chrono::time_point<std::chrono::
 {
     std::string path = directory_;
 
+    // append a directory named YYYY-MM-DD to the configured recording directory
     if (directory_.back() == '/') {
         path.append(DateString(time) + "/");
     } else {
         path.append("/" + DateString(time) + "/");
     }
+
+    // now append the filename to it
     path.append(filename);
 
+    // returned path should be of the form <video_capture_dir>/YYYY-MM-DD/filename
     return path;
 }
+
+// setters for the RecordingSessionConfig class
+// -- we shoudl add as many validation checks as we can.
 
 void CameraController::RecordingSessionConfig::set_target_fps(unsigned int target_fps)
 {
@@ -200,6 +212,7 @@ void CameraController::RecordingSessionConfig::set_compression_target(const std:
 
 void CameraController::RecordingSessionConfig::set_crf(unsigned int crf)
 {
+    // for 8-bit x264 encoding, the range of the CRF scale is 0-51
     if (crf > 51) {
         throw std::invalid_argument("crf must be in the range [0, 51]");
     }

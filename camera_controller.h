@@ -15,6 +15,12 @@ namespace codecs {
 static std::vector<std::string> codec_names({"mpeg4", "libx264"});
 const static std::string MPEG4 = "mpeg4";
 const static std::string LIBX264 = "libx264";
+
+/**
+ * @brief function to check that a string is a valid codec name
+ * @param type_name name to check
+ * @return true if valid false otherwise
+ */
 bool Validate(std::string type_name);
 } // namespace codecs
 
