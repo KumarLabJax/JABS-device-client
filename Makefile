@@ -9,7 +9,7 @@ DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.d
 
 SRCS = main.cpp status_update.cpp system_info.cpp camera_controller.cpp pylon_camera.cpp video_writer.cpp pixel_types.cpp
 OBJS = $(SRCS:.cpp=.o)
-HEADERS = status_update.h system_info.h ltm_exceptions.h video_writer.h pixel_types.h
+HEADERS = status_update.h system_info.h ltm_exceptions.h video_writer.h pixel_types.h camera_controller.h pylon_camera.h
 
 MAIN = ltm-device
 
