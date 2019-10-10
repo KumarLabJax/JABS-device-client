@@ -12,9 +12,9 @@
 #include "pixel_types.h"
 
 namespace codecs {
-static std::vector<std::string> codec_names({"mpeg4", "libx264"});
-const static std::string MPEG4 = "mpeg4";
-const static std::string LIBX264 = "libx264";
+static const std::vector<std::string> codec_names({"mpeg4", "libx264"});
+static const std::string MPEG4 = "mpeg4";
+static const std::string LIBX264 = "libx264";
 
 /**
  * @brief function to check that a string is a valid codec name
