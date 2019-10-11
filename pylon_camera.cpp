@@ -51,10 +51,11 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
     CBaslerGigEInstantCamera camera;
 
     // attach and configure the camera
-    CameraConfiguration customConfig(config.frame_width(), config.frame_height(), config.target_fps(), config.pixel_format(), false);
+    // customConfig will be managed by the Basler API so we won't need to free this
+    CameraConfiguration* customConfig = new CameraConfiguration(config.frame_width(), config.frame_height(), config.target_fps(), config.pixel_format(), false);
     try {
         camera.Attach(CTlFactory::GetInstance().CreateFirstDevice());
-        camera.RegisterConfiguration(&customConfig, RegistrationMode_ReplaceAll, Cleanup_None);
+        camera.RegisterConfiguration(customConfig, RegistrationMode_ReplaceAll, Cleanup_Delete);
         camera.MaxNumBuffer = 15;
         camera.Open();
     } catch (const GenericException &e) {
@@ -165,7 +166,6 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
 
     // out of acquisition loop, stop grabbing frames and shutdown the camera
     camera.StopGrabbing();
-    camera.DeregisterConfiguration(&customConfig);
     camera.Close();
 
     elapsed_time_ = chrono::duration_cast<chrono::seconds>(
@@ -181,8 +181,13 @@ PylonCameraController::CameraConfiguration::CameraConfiguration(
     frame_height_ = frame_height;
     target_fps_ = target_fps;
 
-    // pixel_format should have been validated by the time we get here
-    pixel_format_ = pixel_format;
+    // for YUV420P we get Mono8 off the camera
+    if (pixel_format == pixel_types::YUV420P) {
+        pixel_format_ = pixel_types::MONO8;
+    } else {
+        // pixel_format should have been validated by the time we get here
+        pixel_format_ = pixel_format;
+    }
 
     enable_pgi_ = enable_pgi;
 }
