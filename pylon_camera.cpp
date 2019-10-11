@@ -198,6 +198,13 @@ void PylonCameraController::CameraConfiguration::OnOpened(CInstantCamera &camera
         // Get the camera control object.
         INodeMap &control = camera.GetNodeMap();
 
+        if (!camera.IsGigE()) {
+            throw RUNTIME_EXCEPTION("Could not apply configuration: Only GigE cameras are currently supported.");
+        }
+
+        CBaslerGigEInstantCamera *gige_camera = dynamic_cast<CBaslerGigEInstantCamera *>(&camera);
+
+
         // Get the parameters for setting the image area of interest (Image AOI).
         const CIntegerPtr width = control.GetNode("Width");
         const CIntegerPtr height = control.GetNode("Height");
@@ -233,82 +240,75 @@ void PylonCameraController::CameraConfiguration::OnOpened(CInstantCamera &camera
         CEnumerationPtr(control.GetNode("PixelFormat"))->FromString(pixel_format_.c_str());
 
         CEnumerationPtr(control.GetNode("ShutterMode"))->FromString("Global");
-        if (camera.IsGigE()) {
-            dynamic_cast<CBaslerGigEInstantCamera *>(&camera)->AutoFunctionAOISelector.SetValue(
-                Basler_GigECameraParams::AutoFunctionAOISelector_AOI1);
 
-            // Assign the auto-gain to only look at the RoI assigned for exposure balancing
-            //camera.AutoFunctionAOISelector.SetValue(AutoFunctionAOISelector_AOI1);
-            if (IsWritable(auto_roi_offset_x)) {
-                auto_roi_offset_x->SetValue(auto_roi_offset_x->GetMin());
-            }
-            if (IsWritable(auto_roi_offset_y)) {
-                auto_roi_offset_y->SetValue(auto_roi_offset_y->GetMin());
-            }
+        gige_camera->AutoFunctionAOISelector.SetValue(Basler_GigECameraParams::AutoFunctionAOISelector_AOI1);
 
-            // Assign frame width/height
-            auto_roi_width->SetValue(frame_width_);
-            auto_roi_height->SetValue(frame_height_);
+        // Assign the auto-gain to only look at the RoI assigned for exposure balancing
+        //camera.AutoFunctionAOISelector.SetValue(AutoFunctionAOISelector_AOI1);
+        if (IsWritable(auto_roi_offset_x)) {
+            auto_roi_offset_x->SetValue(auto_roi_offset_x->GetMin());
+        }
+        if (IsWritable(auto_roi_offset_y)) {
+            auto_roi_offset_y->SetValue(auto_roi_offset_y->GetMin());
+        }
 
-            // Re-center, the GetMax is already shifted given the width/height
-            if (IsWritable(auto_roi_offset_x)) {
-                auto_roi_offset_x->SetValue(int(auto_roi_offset_x->GetMax() / 2));
-            }
+        // Assign frame width/height
+        auto_roi_width->SetValue(frame_width_);
+        auto_roi_height->SetValue(frame_height_);
 
-            if (IsWritable(auto_roi_offset_y)) {
-                auto_roi_offset_y->SetValue(int(auto_roi_offset_y->GetMax() / 2));
-            }
+        // Re-center, the GetMax is already shifted given the width/height
+        if (IsWritable(auto_roi_offset_x)) {
+            auto_roi_offset_x->SetValue(int(auto_roi_offset_x->GetMax() / 2));
+        }
 
-            dynamic_cast<CBaslerGigEInstantCamera *>(&camera)->AutoFunctionAOISelector.SetValue(
-                Basler_GigECameraParams::AutoFunctionAOISelector_AOI2);
+        if (IsWritable(auto_roi_offset_y)) {
+            auto_roi_offset_y->SetValue(int(auto_roi_offset_y->GetMax() / 2));
+        }
 
-            // Assign the auto-gain to only look at the RoI assigned for white balancing
-            if (IsWritable(auto_roi_offset_x)) {
-                auto_roi_offset_x->SetValue(auto_roi_offset_x->GetMin());
-            }
+        gige_camera->AutoFunctionAOISelector.SetValue(Basler_GigECameraParams::AutoFunctionAOISelector_AOI2);
 
-            if (IsWritable(auto_roi_offset_y)) {
-                auto_roi_offset_y->SetValue(auto_roi_offset_y->GetMin());
-            }
+        // Assign the auto-gain to only look at the RoI assigned for white balancing
+        if (IsWritable(auto_roi_offset_x)) {
+            auto_roi_offset_x->SetValue(auto_roi_offset_x->GetMin());
+        }
 
-            // Assign frame width/height
-            auto_roi_width->SetValue(frame_width_);
-            auto_roi_height->SetValue(frame_height_);
+        if (IsWritable(auto_roi_offset_y)) {
+            auto_roi_offset_y->SetValue(auto_roi_offset_y->GetMin());
+        }
 
-            // Re-center, the GetMax is already shifted given the width/height
-            if (IsWritable(auto_roi_offset_x)) {
-                auto_roi_offset_x->SetValue(int(auto_roi_offset_x->GetMax() / 2));
-            }
+        // Assign frame width/height
+        auto_roi_width->SetValue(frame_width_);
+        auto_roi_height->SetValue(frame_height_);
 
-            if (IsWritable(auto_roi_offset_y)) {
-                auto_roi_offset_y->SetValue(int(auto_roi_offset_y->GetMax() / 2));
-            }
+        // Re-center, the GetMax is already shifted given the width/height
+        if (IsWritable(auto_roi_offset_x)) {
+            auto_roi_offset_x->SetValue(int(auto_roi_offset_x->GetMax() / 2));
+        }
 
-            // Enforce a 15ms exposure time manually
-            dynamic_cast<CBaslerGigEInstantCamera *>(&camera)->ExposureTimeRaw.SetValue(15000);
+        if (IsWritable(auto_roi_offset_y)) {
+            auto_roi_offset_y->SetValue(int(auto_roi_offset_y->GetMax() / 2));
+        }
 
-            // Set autogain
-            dynamic_cast<CBaslerGigEInstantCamera *>(&camera)->ExposureAuto.SetValue(
-                Basler_GigECameraParams::ExposureAuto_Off);
-            dynamic_cast<CBaslerGigEInstantCamera *>(&camera)->GainAuto.SetValue(
-                Basler_GigECameraParams::GainAuto_Once);
+        // Enforce a 15ms exposure time manually
+        gige_camera->ExposureTimeRaw.SetValue(15000);
 
-            // Stream parameters (for more efficient gige communication)
-            dynamic_cast<CBaslerGigEInstantCamera *>(&camera)->GevStreamChannelSelector.SetValue(
-                Basler_GigECameraParams::GevStreamChannelSelector_StreamChannel0);
-            dynamic_cast<CBaslerGigEInstantCamera *>(&camera)->GevSCPD.SetValue(0);
-            dynamic_cast<CBaslerGigEInstantCamera *>(&camera)->GevSCFTD.SetValue(0);
-            dynamic_cast<CBaslerGigEInstantCamera *>(&camera)->GevSCBWR.SetValue(5);
-            dynamic_cast<CBaslerGigEInstantCamera *>(&camera)->GevSCBWRA.SetValue(2);
-            dynamic_cast<CBaslerGigEInstantCamera *>(&camera)->GevSCPSPacketSize.SetValue(9000);
+        // Set autogain
+        gige_camera->ExposureAuto.SetValue(Basler_GigECameraParams::ExposureAuto_Off);
+        gige_camera->GainAuto.SetValue( Basler_GigECameraParams::GainAuto_Once);
 
-            // PGI mode stuff
-            if (enable_pgi_) {
-                dynamic_cast<CBaslerGigEInstantCamera *>(&camera)->PgiMode.SetValue(
-                    Basler_GigECameraParams::PgiMode_On);
-                dynamic_cast<CBaslerGigEInstantCamera *>(&camera)->NoiseReductionRaw.SetValue(10);
-                dynamic_cast<CBaslerGigEInstantCamera *>(&camera)->SharpnessEnhancementRaw.SetValue(100);
-            }
+        // Stream parameters (for more efficient gige communication)
+        gige_camera->GevStreamChannelSelector.SetValue(Basler_GigECameraParams::GevStreamChannelSelector_StreamChannel0);
+        gige_camera->GevSCPD.SetValue(0);
+        gige_camera->GevSCFTD.SetValue(0);
+        gige_camera->GevSCBWR.SetValue(5);
+        gige_camera->GevSCBWRA.SetValue(2);
+        gige_camera->GevSCPSPacketSize.SetValue(9000);
+
+        // PGI mode stuff
+        if (enable_pgi_) {
+            gige_camera->PgiMode.SetValue(Basler_GigECameraParams::PgiMode_On);
+            gige_camera->NoiseReductionRaw.SetValue(10);
+            gige_camera->SharpnessEnhancementRaw.SetValue(100);
         }
 
         // Framerate items
