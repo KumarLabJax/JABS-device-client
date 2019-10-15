@@ -35,10 +35,16 @@ VideoWriter::VideoWriter(VideoWriter &&o) : ffcodec_(o.ffcodec_), apply_filter_(
                                             stream_(o.stream_),
                                             codec_context_(std::move(o.codec_context_)),
                                             format_context_(std::move(o.format_context_)),
-                                            filter_graph_(std::move(o.filter_graph_)){}
+                                            filter_graph_(std::move(o.filter_graph_)) {}
 
+
+// parameter constructor for creating configured VideoWriters
+// this is the only way to construct a VideoWriter other than through a move
+// assignment or move constructor
 VideoWriter::VideoWriter(const std::string& filename, const CameraController::RecordingSessionConfig& config)
 {
+    // make sure that config.codec is something we support
+    // for now we are only supporting LIBX264
     if (config.codec() != codecs::LIBX264) {
         throw std::invalid_argument("currently only libx264 codec is supported");
     }
@@ -47,6 +53,7 @@ VideoWriter::VideoWriter(const std::string& filename, const CameraController::Re
     full_filename.append(".avi");
 
 
+    // lookup specified codec
     ffcodec_ = avcodec_find_encoder_by_name(config.codec().c_str());
     if (!ffcodec_) {
         throw std::invalid_argument("unable to get codec " + config.codec());
@@ -59,6 +66,7 @@ VideoWriter::VideoWriter(const std::string& filename, const CameraController::Re
         throw std::runtime_error("unable to initialize AVCodecContext");
     }
 
+    // setup codec_context_
     codec_context_->width = config.frame_width();
     codec_context_->height = config.frame_height();
     codec_context_->time_base = (AVRational){1, config.target_fps()};
@@ -90,7 +98,7 @@ VideoWriter::VideoWriter(const std::string& filename, const CameraController::Re
     }
     codec_context_->pix_fmt = selected_pixel_format_;
 
-    // Open up the ffmpeg codec
+    // Open up the codec
     if (avcodec_open2(codec_context_.get(), ffcodec_, NULL) < 0) {
         throw std::runtime_error("unable to open ffmpeg codec");
     }
@@ -114,7 +122,7 @@ VideoWriter::VideoWriter(const std::string& filename, const CameraController::Re
         throw std::runtime_error("unable to write header");
     }
 
-    // initializing filter
+    // initialize filter
     if (apply_filter_) {
         InitFilters();
     }
@@ -145,8 +153,10 @@ void VideoWriter::InitFilters()
     av_pointer::in_out outputs(avfilter_inout_alloc());
     av_pointer::in_out inputs(avfilter_inout_alloc());
 
+    // allocate filter graph
     filter_graph_ = av_pointer::filter_graph(avfilter_graph_alloc());
 
+    // make sure everything has been initialized properly
     if (!outputs || !inputs || !filter_graph_) {
         throw std::runtime_error("unable to initialize filters");
     }
@@ -219,8 +229,8 @@ void VideoWriter::InitFilters()
 // initialize a frame and return a pointer to it
 av_pointer::frame VideoWriter::InitFrame() {
 
-    // temporary smart pointer, can be returned from function without using
-    // std::move to tranfer ownership
+    // temporary smart pointer, can be returned from function and moved without
+    // using std::move to transfer ownership
     av_pointer::frame frame(av_frame_alloc());
 
     if (!frame) {
@@ -332,5 +342,3 @@ void VideoWriter::Encode(AVFrame *frame)
         av_interleaved_write_frame(format_context_.get(), pkt.get());
     }
 }
-
-
