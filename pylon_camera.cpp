@@ -21,10 +21,10 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
     std::string timestamp_filename = filename;
     std::string timestamp_start_filename = filename;
 
-    int next_hour;
+    int next_hour = 0;
     size_t current_frame = 0;   // frame number in the current file
     size_t frames_captured = 0; // total number of frames captured in session
-    uint64_t first_click;       // timestamp of first frame captured
+    uint64_t first_click = 0;   // timestamp of first frame captured
     uint64_t last_click = 0;    // timestamp of last frame captured
     double current_fps;
 
@@ -150,12 +150,8 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
             filename = MakeFilePath(start_time, config.file_prefix());
             filename.append("_" + timestamp(start_time));
 
-            // tell video_writer to write to the new file
-            if (video_writer.RollFile(filename) !=0 ) {
-                err_msg_ = "Unable to setup next video";
-                err_state_ = 1;
-                break;
-            }
+            // setup a VideoWriter to the new filename:
+            video_writer = VideoWriter(filename, config);
 
             next_hour = (GetCurrentHour(start_time) + 1) % 24;
             current_frame = 0;

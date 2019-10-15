@@ -2,6 +2,8 @@
 #define PIXEL_TYPES_H
 
 #include <string>
+#include <vector>
+
 namespace pixel_types {
 static const std::vector<std::string> type_names({"Mono8", "Mono12", "YUV420P"});
 static const std::string YUV420P = "YUV420P";
