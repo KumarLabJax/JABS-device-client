@@ -1,3 +1,5 @@
+// Copyright 2019, The Jackson Laboratory, Bar Harbor, Maine - all rights reserved
+
 #ifndef PIXEL_TYPES_H
 #define PIXEL_TYPES_H
 

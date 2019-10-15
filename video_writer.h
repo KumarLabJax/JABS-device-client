@@ -1,3 +1,5 @@
+// Copyright 2019, The Jackson Laboratory, Bar Harbor, Maine - all rights reserved
+
 #ifndef VIDEOWRITER_H
 #define VIDEOWRITER_H
 
@@ -43,9 +45,13 @@ struct AVFormatContextDeleter {
     void operator()(AVFormatContext* context) {
         if (context) {
             if (context->pb) {
+                // if the file has been opened, make sure to write the trailer
                 av_write_trailer(context);
+                // close the AVIO context, will flush internal buffer
+                avio_closep(&context->pb);
             }
-            avio_closep(&context->pb);
+
+            // free AVFormatContext memory
             avformat_free_context(context);
         }
     }
@@ -94,7 +100,8 @@ struct AVFrameDeleter {
 struct AVPacketDeleter {
     void operator()(AVPacket* p) {
         if (p) {
-            av_packet_unref(p);
+            // we are allocating packets with av_packet_alloc, so we need to free them
+            av_packet_free(p);
         }
     }
 };

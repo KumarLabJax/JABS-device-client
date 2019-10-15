@@ -1,3 +1,5 @@
+// Copyright 2019, The Jackson Laboratory, Bar Harbor, Maine - all rights reserved
+
 #include <cstring>
 #include <stdexcept>
 #include <iostream>
@@ -60,7 +62,7 @@ VideoWriter::VideoWriter(const std::string& filename, const CameraController::Re
         throw std::invalid_argument("unable to get codec " + config.codec());
     }
 
-    apply_filter_ = false; //config.apply_filter();
+    apply_filter_ = config.apply_filter();
     codec_context_ = av_pointer::codec_context(avcodec_alloc_context3(ffcodec_));
 
     if (!codec_context_) {

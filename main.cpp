@@ -10,6 +10,8 @@
  * @author glen.beane@jax.org
  */
 
+// Copyright 2019, The Jackson Laboratory, Bar Harbor, Maine - all rights reserved
+
 #include <atomic>
 #include <chrono>
 #include <csignal>

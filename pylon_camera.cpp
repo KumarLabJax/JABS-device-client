@@ -1,3 +1,5 @@
+// Copyright 2019, The Jackson Laboratory, Bar Harbor, Maine - all rights reserved
+
 #include <chrono>
 #include <ctime>
 #include <fstream>
@@ -15,26 +17,33 @@ using namespace GenApi;
 
 void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
 {
+    // reset the CameraController err_state_
+    // this is set to let the controlling thread know that we encountered an error
     err_state_ = 0;
 
-    std::string filename = config.file_prefix();
-    std::string timestamp_filename = filename;
-    std::string timestamp_start_filename = filename;
+    std::string filename = config.file_prefix(); // common prefix for all files
 
+    // if config.fragment_by_hour is true, current hour == next_hour triggers
+    // rolling over to a new file
     int next_hour = 0;
+
     size_t current_frame = 0;   // frame number in the current file
     size_t frames_captured = 0; // total number of frames captured in session
     uint64_t first_click = 0;   // timestamp of first frame captured
     uint64_t last_click = 0;    // timestamp of last frame captured
-    double current_fps;
+    double current_fps;         // current acquisition framerate
 
-    timestamp_filename.append("_timestamps.txt");
-    timestamp_start_filename.append("_start_timestamp.txt");
+    // setup filenames for timestamp files
+    // file for storing timestamp of each frame
+    std::string timestamp_filename = filename + "_timestamps.txt";
+    // file for storing timestamp of recording session start
+    std::string timestamp_start_filename = filename + "_start_timestamp.txt";
 
     // open files
     std::ofstream timestamp_file (timestamp_filename, std::ofstream::out);
     std::ofstream timestamp_start_file (timestamp_start_filename, std::ofstream::out);
 
+    // terminate recording session if we were unable to open either file
     if (!timestamp_file || ! timestamp_start_file) {
         err_state_ = 1;
         err_msg_ = "error opening timestamp files";
@@ -51,10 +60,11 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
     CBaslerGigEInstantCamera camera;
 
     // attach and configure the camera
-    // customConfig will be managed by the Basler API so we won't need to free this
-    CameraConfiguration* customConfig = new CameraConfiguration(config.frame_width(), config.frame_height(), config.target_fps(), config.pixel_format(), false);
     try {
         camera.Attach(CTlFactory::GetInstance().CreateFirstDevice());
+        // customConfig will be managed by the Basler API so we are not using a smart pointer
+        CameraConfiguration *customConfig = new CameraConfiguration(config.frame_width(), config.frame_height(),
+                                                                    config.target_fps(), config.pixel_format(), false);
         camera.RegisterConfiguration(customConfig, RegistrationMode_ReplaceAll, Cleanup_Delete);
         camera.MaxNumBuffer = 15;
         camera.Open();

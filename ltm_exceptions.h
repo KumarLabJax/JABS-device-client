@@ -1,3 +1,5 @@
+// Copyright 2019, The Jackson Laboratory, Bar Harbor, Maine - all rights reserved
+
 #ifndef LTM_EXCEPTIONS_H
 #define LTM_EXCEPTIONS_H
 
