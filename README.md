@@ -34,9 +34,10 @@ installation of the Microsoft C++ REST SDK and its dependencies (such as Boost).
 The Basler pylon SDK, which we use to control our camera, is also required. It 
 can be obtained from the Basler website: https://www.baslerweb.com/en/products/software/
 
-You will also need libavcodec, libavformat, libavfilter, and their development header files. 
-On Ubuntu, `sudo apt install libavcodec-dev libavcodec-dev libavfilter-dev` will
-install these and their dependencies.
+You will also need several ffmpeg libraries, and their development header files. 
+On Ubuntu, `sudo apt install libavcodec-dev libavformat-dev libavfilter-dev 
+libavdevice-dev libavformat-dev libavutil-dev` will install these and their 
+dependencies, however we recommend installing ffmpeg from source. 
 
 ### Configuring as a daemon
 
