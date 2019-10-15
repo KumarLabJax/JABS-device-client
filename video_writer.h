@@ -101,7 +101,7 @@ struct AVPacketDeleter {
     void operator()(AVPacket* p) {
         if (p) {
             // we are allocating packets with av_packet_alloc, so we need to free them
-            av_packet_free(p);
+            av_packet_free(&p);
         }
     }
 };

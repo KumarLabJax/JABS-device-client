@@ -4,16 +4,6 @@
 #include <stdexcept>
 #include <iostream>
 
-extern "C" {
-#include <libavcodec/avcodec.h>
-#include <libavutil/opt.h>
-#include <libavutil/imgutils.h>
-#include <libavutil/pixfmt.h>
-#include <libavformat/avformat.h>
-#include <libavfilter/buffersink.h>
-#include <libavfilter/buffersrc.h>
-}
-
 #include "pixel_types.h"
 #include "video_writer.h"
 #include "camera_controller.h"
