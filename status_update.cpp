@@ -1,11 +1,11 @@
-#include <vector>
-#include <string>
 #include <iostream>
+#include <string>
 #include <systemd/sd-daemon.h>
+#include <vector>
 
+#include <cpprest/asyncrt_utils.h>
 #include <cpprest/http_client.h>
 #include <cpprest/json.h> 
-#include <cpprest/asyncrt_utils.h>
 
 #include "status_update.h"
 #include "system_info.h"

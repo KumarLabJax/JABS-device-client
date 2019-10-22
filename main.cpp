@@ -26,6 +26,7 @@
 #include "status_update.h"
 #include "system_info.h"
 #include "ltm_exceptions.h"
+#include "pylon_camera.h"
 
 // default update interval (in seconds) if it isn't specified in the config file
 const unsigned int kDefaultSleep = 30;
@@ -143,6 +144,8 @@ int main(int argc, char **argv)
         sd_notifyf(0, "STATUS=Failed to register mount");
         return 1;
     }
+
+    PylonCameraController camera_controller(video_capture_dir);
     
     // notify systemd that we're done initializing
     sd_notify(0, "READY=1");
