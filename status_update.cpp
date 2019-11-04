@@ -1,3 +1,5 @@
+// Copyright 2019, The Jackson Laboratory, Bar Harbor, Maine - all rights reserved
+
 #include <iostream>
 #include <string>
 #include <systemd/sd-daemon.h>

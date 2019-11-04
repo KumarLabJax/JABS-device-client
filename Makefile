@@ -1,8 +1,9 @@
 PYLONDIR = /opt/pylon5
 CXX = g++
-CXXFLAGS = -std=c++11 -Wall  -g `$(PYLONDIR)/bin/pylon-config --cflags`
-LDFLAGS = `$(PYLONDIR)/bin/pylon-config --libs`
-LDLIBS = -lsystemd -lcpprest -lpthread -lboost_system -lssl -lcrypto
+CPPFLAGS = -I/opt/ffmpeg-n4.0/include
+CXXFLAGS = -O3 -std=c++11 -Wall  -g `$(PYLONDIR)/bin/pylon-config --cflags`
+LDFLAGS = -L/opt/ffmpeg-n4.0/lib `$(PYLONDIR)/bin/pylon-config --libs`
+LDLIBS = -lsystemd -lcpprest -lpthread -lboost_system -lssl -lcrypto -lavfilter -lavformat -lavcodec -lswscale  -lswscale -lswresample -lavdevice -lpostproc -lavutil -lz -lx264  -lbz2 -lrt -lX11 -lvdpau -llzma
 
 DEPDIR := .deps
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.d

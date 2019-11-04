@@ -1,3 +1,5 @@
+// Copyright 2019, The Jackson Laboratory, Bar Harbor, Maine - all rights reserved
+
 #ifndef SYSTEM_INFO_H
 #define SYSTEM_INFO_H
 

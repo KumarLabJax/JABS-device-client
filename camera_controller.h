@@ -1,3 +1,5 @@
+// Copyright 2019, The Jackson Laboratory, Bar Harbor, Maine - all rights reserved
+
 #ifndef CAMERA_CONTROLLER_H
 #define CAMERA_CONTROLLER_H
 
@@ -51,7 +53,7 @@ public:
     class RecordingSessionConfig {
     public:
         /// get target frames per second
-        unsigned int target_fps() const {return target_fps_;}
+        int target_fps() const {return target_fps_;}
 
         /// get fragment flag
         bool fragment_by_hour() const {return fragment_by_hour_;}
@@ -118,7 +120,7 @@ public:
 
     private:
         /// target frames per second for video acquisition
-        unsigned int target_fps_ = 60;
+        int target_fps_ = 60;
 
         /// video files will be split into hour-long segments
         bool fragment_by_hour_ = false;
@@ -149,7 +151,7 @@ public:
         /// compression Constant Rate Factor (CRF) 0 = lossless, 51 = worst possible quality
         unsigned int crf_ = 11;
 
-        bool apply_filter_ = true;
+        bool apply_filter_ = false;
     };
 
     /**

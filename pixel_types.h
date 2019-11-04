@@ -1,7 +1,11 @@
+// Copyright 2019, The Jackson Laboratory, Bar Harbor, Maine - all rights reserved
+
 #ifndef PIXEL_TYPES_H
 #define PIXEL_TYPES_H
 
 #include <string>
+#include <vector>
+
 namespace pixel_types {
 static const std::vector<std::string> type_names({"Mono8", "Mono12", "YUV420P"});
 static const std::string YUV420P = "YUV420P";
