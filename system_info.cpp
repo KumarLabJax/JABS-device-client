@@ -8,6 +8,8 @@
 #include <sys/statvfs.h>
 #include <unistd.h>
 #include <assert.h>
+#include <stdlib.h>
+#include <sys/utsname.h>
 
 #include "system_info.h"
 
