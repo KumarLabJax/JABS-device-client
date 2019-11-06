@@ -35,14 +35,18 @@ BaseCommand* send_status_update(SysInfo system_info, CameraController& camera_co
     payload["name"] = web::json::value(system_info.hostname());
     payload["timestamp"] = web::json::value::string(timestamp);
 
-    if (camera_controller.recording()) {
+    if (camera_controller.session_id() != -1) {
         payload["state"] = web::json::value("BUSY");
+    } else {
+        payload["state"] = web::json::value("IDLE");
+    }
+
+    if (camera_controller.recording()) {
         payload["sensor_status"]["camera"]["recording"] = web::json::value::boolean(true);
         payload["sensor_status"]["camera"]["duration"] = web::json::value::number(camera_controller.elapsed_time().count());
         payload["sensor_status"]["camera"]["fps"] = web::json::value::number(camera_controller.avg_fps());
         payload["session_id"] = web::json::value::number(camera_controller.session_id());
     } else {
-        payload["state"] = web::json::value("IDLE");
         payload["sensor_status"]["camera"]["recording"] = web::json::value::boolean(false);
 
         // camera is done recording -- send final elapsed_time value for the session
