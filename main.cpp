@@ -29,6 +29,7 @@
 #include "system_info.h"
 #include "ltm_exceptions.h"
 #include "pylon_camera.h"
+#include "server_command.h"
 
 // default update interval (in seconds) if it isn't specified in the config file
 const unsigned int kDefaultSleep = 30;
@@ -182,8 +183,30 @@ int main(int argc, char **argv)
         system_info.Sample(); 
         
         // send updated status to the server
-        send_status_update(system_info, api_uri);
-        
+        BaseCommand* svr_command = send_status_update(system_info, api_uri);
+
+        switch (dynamic_cast<ServerCommand*>(svr_command)->command()) {
+            case CommandTypes::NOOP:
+                std::clog << SD_DEBUG << "NOOP" << std::endl;
+                break;
+            case CommandTypes::START_RECORDING:
+            {
+                std::clog << SD_DEBUG << "START_RECORDING" << std::endl;
+                RecordingParameters recording_parameters = dynamic_cast<RecordCommand*>(svr_command)->parameters();
+                std::cout << "file prefix" << recording_parameters.file_prefix << std::endl;
+                std::cout << "duration " << recording_parameters.duration << std::endl;
+                break;
+            }
+            case CommandTypes::STOP_RECORDING:
+                std::clog << SD_DEBUG << "STOP_RECORDING" << std::endl;
+                break;
+            case CommandTypes::UNKNOWN:
+                std::clog << SD_ERR << "Server responded with unknown command" << std::endl;
+                break;
+        }
+
+        free(svr_command);
+
         // sleep until next iteration
         std::this_thread::sleep_for(std::chrono::seconds(sleep_time));
     }

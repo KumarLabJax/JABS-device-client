@@ -22,13 +22,14 @@ using namespace concurrency::streams;
 const std::string kStatusUpdateEndpoint = "/device/heartbeat";
 
 
-void send_status_update(SysInfo system_info, const std::string api_uri)
+BaseCommand* send_status_update(SysInfo system_info, const std::string api_uri)
 {
     static web::http::client::http_client client(api_uri);
     
     json::value payload;
-    json::value json_return;
-    
+    BaseCommand *command = nullptr;
+
+
     std::string timestamp = datetime::utc_now().to_string(datetime::date_format::ISO_8601);    
     std::clog << SD_INFO << "Sending status update @ " << timestamp << std::endl;
     
@@ -60,7 +61,7 @@ void send_status_update(SysInfo system_info, const std::string api_uri)
     
     // send update to the server
     pplx::task<void> requestTask = client.request(web::http::methods::POST, kStatusUpdateEndpoint, payload)
-    .then([](const web::http::http_response& response) {
+    .then([&command](const web::http::http_response& response) {
         status_code status = response.status_code();
         
         if (status >= http::status_codes::BadRequest) {
@@ -103,7 +104,20 @@ void send_status_update(SysInfo system_info, const std::string api_uri)
             std::clog << SD_INFO << "Server responded with no content" << std::endl;
         } else if (status == http::status_codes::OK) {
             json::value response_body = response.extract_json().get();
-            // TODO parse response to see if the server wants us to do something
+            switch (getCommand(response_body)) {
+                case CommandTypes::START_RECORDING:
+                    command = new RecordCommand(response_body);
+                    break;
+                case CommandTypes::STOP_RECORDING:
+                    command = new ServerCommand(response_body);
+                    break;
+                case CommandTypes::NOOP:
+                    command = new ServerCommand();
+                    break;
+                case CommandTypes::UNKNOWN:
+                    command = new ServerCommand(CommandTypes::UNKNOWN);
+                    break;
+            }
         }      
     });
     
@@ -114,4 +128,10 @@ void send_status_update(SysInfo system_info, const std::string api_uri)
     {
         std::clog << SD_ERR << "HTTP Exception: " << e.what() << std::endl;
     }
+
+    if (!command) {
+        command = new ServerCommand();
+    }
+
+    return command;
 }
