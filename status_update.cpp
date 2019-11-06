@@ -35,7 +35,6 @@ BaseCommand* send_status_update(SysInfo system_info, CameraController& camera_co
     payload["name"] = web::json::value(system_info.hostname());
     payload["timestamp"] = web::json::value::string(timestamp);
 
-
     if (camera_controller.recording()) {
         payload["state"] = web::json::value("BUSY");
         payload["sensor_status"]["camera"]["recording"] = web::json::value::boolean(true);
