@@ -46,7 +46,7 @@ BaseCommand* send_status_update(SysInfo system_info, CameraController& camera_co
         payload["sensor_status"]["camera"]["recording"] = web::json::value::boolean(false);
 
         // camera is done recording -- send final elapsed_time value for the session
-        if (camera_controller.session_id()) {
+        if (camera_controller.session_id() != -1) {
             payload["session_id"] = web::json::value::number(camera_controller.session_id());
         }
         if (camera_controller.elapsed_time().count() != 0) {
