@@ -65,7 +65,7 @@ public:
         std::chrono::seconds duration() const {return duration_;}
 
         /// get session ID
-        uint32_t session_id() {return session_id_;}
+        int session_id() const {return session_id_;}
 
         /// get frame height
         size_t frame_height() const {return frame_height_;}
@@ -137,7 +137,7 @@ public:
         std::chrono::seconds duration_;
 
         /// session ID
-        uint32_t session_id_;
+        int session_id_ = -1;
 
         /// height of frame in pixels
         size_t frame_height_ = 800;
@@ -245,6 +245,12 @@ public:
      * @return 0 if there were no errors, non-zero value otherwise
      */
     int recording_error() const;
+
+
+    /**
+     * clear information from previous recording session
+     */
+    void ClearSession();
 
 protected:
     const std::string directory_;     ///< directory for storing video

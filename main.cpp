@@ -86,13 +86,14 @@ int setConfig(std::string config_path,
 int main(int argc, char **argv)
 {
    
-    std::string config_path;         ///path to configuration file, will be passed as a program argument
-    std::string video_capture_dir;   ///path to video capture directory, will be set from a config file
-    std::string api_uri;             ///URI for webservice API
-    std::chrono::seconds sleep_time; ///time to wait between status update calls to API, in seconds
-    SysInfo system_info;             ///information about the host system (memory, disk, load)
-    int rval;                        ///used to check return value of some functions
-    
+    std::string config_path;         ///< path to configuration file, will be passed as a program argument
+    std::string video_capture_dir;   ///< path to video capture directory, will be set from a config file
+    std::string api_uri;             ///< URI for webservice API
+    std::chrono::seconds sleep_time; ///< time to wait between status update calls to API, in seconds
+    SysInfo system_info;             ///< information about the host system (memory, disk, load)
+    int rval;                        ///< used to check return value of some functions
+    bool no_sleep;                   ///< used to indicate that we don't want to sleep before next iteration
+
     // setup a signal handler to catch HUP signals which indicate that the
     // config file should be reloaded
     signal(SIGHUP, signalHandler); 
@@ -155,6 +156,7 @@ int main(int argc, char **argv)
     
     // main loop
     while (1) {
+        no_sleep = false;
     
         // if we've received a HUP signal then reload the configuration file
         if (hup_received) {
@@ -205,11 +207,18 @@ int main(int argc, char **argv)
                 config.set_session_id(recording_parameters.session_id);
 
                 camera_controller.StartRecording(config);
+                no_sleep = true;
                 break;
             }
             case CommandTypes::STOP_RECORDING:
                 std::clog << SD_DEBUG << "STOP_RECORDING" << std::endl;
                 camera_controller.StopRecording();
+                no_sleep = true;
+                break;
+            case CommandTypes::COMPLETE:
+                std::clog << SD_DEBUG << "COMPLETE" << std::endl;
+                camera_controller.ClearSession();
+                no_sleep = true;
                 break;
             case CommandTypes::UNKNOWN:
                 std::clog << SD_ERR << "Server responded with unknown command" << std::endl;
@@ -218,8 +227,11 @@ int main(int argc, char **argv)
 
         free(svr_command);
 
-        // sleep until next iteration
-        std::this_thread::sleep_for(std::chrono::seconds(sleep_time));
+        if (!no_sleep) {
+            // sleep until next iteration
+            std::this_thread::sleep_for(std::chrono::seconds(sleep_time));
+        }
+
     }
     
     return 0;

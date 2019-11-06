@@ -12,6 +12,7 @@ enum CommandTypes {
     NOOP,
     START_RECORDING,
     STOP_RECORDING,
+    COMPLETE,
     UNKNOWN
 };
 }

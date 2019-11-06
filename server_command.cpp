@@ -6,7 +6,8 @@ using namespace web;
 using namespace CommandTypes;
 
 #define START_CMD "START"
-#define STOP_CMD "CANCEL"
+#define STOP_CMD  "STOP"
+#define COMPLETE_CMD "COMPLETE"
 
 CommandTypes::CommandTypes getCommand(json::value payload)
 {
@@ -14,6 +15,8 @@ CommandTypes::CommandTypes getCommand(json::value payload)
         return CommandTypes::START_RECORDING;
     } else if (payload["command_name"].as_string() == STOP_CMD) {
         return CommandTypes::STOP_RECORDING;
+    } else if (payload["command_name"].as_string() == COMPLETE_CMD) {
+        return CommandTypes::COMPLETE;
     }
     return CommandTypes::UNKNOWN;
 }

@@ -44,6 +44,14 @@ BaseCommand* send_status_update(SysInfo system_info, CameraController& camera_co
     } else {
         payload["state"] = web::json::value("IDLE");
         payload["sensor_status"]["camera"]["recording"] = web::json::value::boolean(false);
+
+        // camera is done recording -- send final elapsed_time value for the session
+        if (camera_controller.session_id()) {
+            payload["session_id"] = web::json::value::number(camera_controller.session_id());
+        }
+        if (camera_controller.elapsed_time().count() != 0) {
+            payload["sensor_status"]["camera"]["duration"] = web::json::value::number(camera_controller.elapsed_time().count());
+        }
     }
     
     payload["system_info"]["release"] = web::json::value::string(system_info.release());
@@ -114,6 +122,9 @@ BaseCommand* send_status_update(SysInfo system_info, CameraController& camera_co
                     break;
                 case CommandTypes::NOOP:
                     command = new ServerCommand();
+                    break;
+                case CommandTypes::COMPLETE:
+                    command = new ServerCommand(CommandTypes::COMPLETE);
                     break;
                 case CommandTypes::UNKNOWN:
                     command = new ServerCommand(CommandTypes::UNKNOWN);

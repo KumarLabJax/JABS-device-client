@@ -78,7 +78,7 @@ bool CameraController::StartRecording(const RecordingSessionConfig& config)
         return false;
     }
 
-    //session_id_ = config.session_id();
+    session_id_ = config.session_id();
     elapsed_time_ = std::chrono::seconds::zero();
 
     // avoid resizing moving_avg_ during acquisition loop since we already
@@ -156,6 +156,14 @@ std::string CameraController::MakeFilePath(std::chrono::time_point<std::chrono::
 
     // returned path should be of the form <video_capture_dir>/YYYY-MM-DD/filename
     return path;
+}
+
+void CameraController::ClearSession()
+{
+    if (!recording_) {
+        elapsed_time_ = std::chrono::seconds::zero();
+        session_id_ = -1;
+    }
 }
 
 // setters for the RecordingSessionConfig class
