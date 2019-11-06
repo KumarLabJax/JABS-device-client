@@ -183,7 +183,7 @@ int main(int argc, char **argv)
         system_info.Sample(); 
         
         // send updated status to the server
-        BaseCommand* svr_command = send_status_update(system_info, api_uri);
+        BaseCommand* svr_command = send_status_update(system_info, camera_controller, api_uri);
 
         switch (dynamic_cast<ServerCommand*>(svr_command)->command()) {
             case CommandTypes::NOOP:
@@ -192,13 +192,24 @@ int main(int argc, char **argv)
             case CommandTypes::START_RECORDING:
             {
                 std::clog << SD_DEBUG << "START_RECORDING" << std::endl;
+
+                // cast the svr_command pointer to a RecordCommand* so we can
+                // access the parameters() method.
                 RecordingParameters recording_parameters = dynamic_cast<RecordCommand*>(svr_command)->parameters();
-                std::cout << "file prefix" << recording_parameters.file_prefix << std::endl;
-                std::cout << "duration " << recording_parameters.duration << std::endl;
+
+                // setup recording session configuration
+                PylonCameraController::RecordingSessionConfig config;
+                config.set_file_prefix(recording_parameters.file_prefix);
+                config.set_duration(std::chrono::seconds(recording_parameters.duration));
+                config.set_fragment_by_hour(recording_parameters.fragment_hourly);
+                config.set_session_id(recording_parameters.session_id);
+
+                camera_controller.StartRecording(config);
                 break;
             }
             case CommandTypes::STOP_RECORDING:
                 std::clog << SD_DEBUG << "STOP_RECORDING" << std::endl;
+                camera_controller.StopRecording();
                 break;
             case CommandTypes::UNKNOWN:
                 std::clog << SD_ERR << "Server responded with unknown command" << std::endl;

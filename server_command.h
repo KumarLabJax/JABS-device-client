@@ -16,9 +16,8 @@ enum CommandTypes {
 };
 }
 
-
 struct RecordingParameters {
-    std::string session_id;
+    int session_id;
     size_t duration;
     bool fragment_hourly;
     std::string file_prefix;

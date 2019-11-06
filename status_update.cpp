@@ -22,13 +22,12 @@ using namespace concurrency::streams;
 const std::string kStatusUpdateEndpoint = "/device/heartbeat";
 
 
-BaseCommand* send_status_update(SysInfo system_info, const std::string api_uri)
+BaseCommand* send_status_update(SysInfo system_info, CameraController& camera_controller, const std::string api_uri)
 {
     static web::http::client::http_client client(api_uri);
     
     json::value payload;
     BaseCommand *command = nullptr;
-
 
     std::string timestamp = datetime::utc_now().to_string(datetime::date_format::ISO_8601);    
     std::clog << SD_INFO << "Sending status update @ " << timestamp << std::endl;
@@ -38,12 +37,15 @@ BaseCommand* send_status_update(SysInfo system_info, const std::string api_uri)
     
     //TODO set this based on device state
     payload["state"] = web::json::value("IDLE");
-    
-    payload["sensor_status"]["camera"]["recording"] = web::json::value::boolean(false);
-    //TODO these only need to be set if the camera is recording
-    //payload["sensor_status"]["camera"]["duration"] = 
-    //payload["sensor_status"]["camera"]["fps"] = 
-    
+
+    if (camera_controller.recording()) {
+        payload["sensor_status"]["camera"]["recording"] = web::json::value::boolean(true);
+        payload["sensor_status"]["camera"]["duration"] = web::json::value::number(camera_controller.elapsed_time().count());
+        payload["sensor_status"]["camera"]["fps"] = web::json::value::number(camera_controller.avg_fps());
+        payload["session_id"] = web::json::value::number(camera_controller.session_id());
+    } else {
+        payload["sensor_status"]["camera"]["recording"] = web::json::value::boolean(false);
+    }
     
     payload["system_info"]["release"] = web::json::value::string(system_info.release());
     payload["system_info"]["uptime"] = web::json::value::number(system_info.uptime());
