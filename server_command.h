@@ -28,7 +28,7 @@ class BaseCommand {
     virtual CommandTypes::CommandTypes command() = 0;
 };
 
-class ServerCommand: public BaseCommand{
+class ServerCommand{
 public:
     CommandTypes::CommandTypes command(){return command_;}
     ServerCommand(web::json::value command_payload);

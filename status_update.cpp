@@ -22,12 +22,12 @@ using namespace concurrency::streams;
 const std::string kStatusUpdateEndpoint = "/device/heartbeat";
 
 
-BaseCommand* send_status_update(SysInfo system_info, CameraController& camera_controller, const std::string api_uri)
+ServerCommand* send_status_update(SysInfo system_info, CameraController& camera_controller, const std::string api_uri)
 {
     static web::http::client::http_client client(api_uri);
     
     json::value payload;
-    BaseCommand *command = nullptr;
+    ServerCommand *command = nullptr;
 
     std::string timestamp = datetime::utc_now().to_string(datetime::date_format::ISO_8601);    
     std::clog << SD_INFO << "Sending status update @ " << timestamp << std::endl;
@@ -52,6 +52,10 @@ BaseCommand* send_status_update(SysInfo system_info, CameraController& camera_co
         // camera is done recording -- send final elapsed_time value for the session
         if (camera_controller.session_id() != -1) {
             payload["session_id"] = web::json::value::number(camera_controller.session_id());
+
+            if (camera_controller.recording_error()) {
+                payload["err_msg"] = web::json::value::string(camera_controller.error_string());
+            }
         }
         if (camera_controller.elapsed_time().count() != 0) {
             payload["sensor_status"]["camera"]["duration"] = web::json::value::number(camera_controller.elapsed_time().count());
@@ -71,7 +75,7 @@ BaseCommand* send_status_update(SysInfo system_info, CameraController& camera_co
     DiskInfo di = system_info.disk_info(mounts[0]);
     payload["system_info"]["free_disk"] = web::json::value::number(di.available);
     payload["system_info"]["total_disk"] = web::json::value::number(di.capacity);
-    
+
     // send update to the server
     pplx::task<void> requestTask = client.request(web::http::methods::POST, kStatusUpdateEndpoint, payload)
     .then([&command](const web::http::http_response& response) {

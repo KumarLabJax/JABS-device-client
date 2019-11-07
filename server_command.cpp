@@ -30,7 +30,6 @@ RecordingParameters RecordCommand::parseRecordingParameters(web::json::value pay
     json::value parameters = json::value::parse(ss);
 
     RecordingParameters params;
-    params.session_id = parameters["session_id"].as_number().to_uint32();
     if (!parameters["file_prefix"].is_null()) {
         params.file_prefix = parameters["file_prefix"].as_string();
     } else {

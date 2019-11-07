@@ -260,7 +260,7 @@ protected:
     std::chrono::seconds elapsed_time_;   ///< duration of completed recording session
     std::atomic<std::chrono::high_resolution_clock::duration> session_start_;
     std::vector<double> moving_avg_;  ///<  buffer storing fps for last N frames captured where N is the target framerate
-    int session_id_; ///< stores session ID if current recording session (if there is one)
+    int session_id_ {-1}; ///< stores session ID if current recording session (if there is one)
     std::string err_msg_; ///< error message if recording_err_
     int err_state_;       ///< error state of last completed recording session
     std::mutex mutex_;    ///< mutex for protecting some variables shared by controlling thread and recording thread
