@@ -273,7 +273,7 @@ protected:
     std::string DateString(std::chrono::time_point<std::chrono::system_clock> time);
 
     /**
-     * @brief make a file path using the recording directory and a date string
+     * @brief make a directory using the recording directory and a date string
      * @param time sytem time to use to generate a date string
      * @return path
      */
