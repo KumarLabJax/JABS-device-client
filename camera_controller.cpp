@@ -1,13 +1,17 @@
 // Copyright 2019, The Jackson Laboratory, Bar Harbor, Maine - all rights reserved
 
 #include <algorithm>
+#include <cerrno>
 #include <chrono>
+#include <cstring>
 #include <iomanip>
 #include <iostream>
 #include <numeric>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+
+#include <sys/stat.h>
 
 #include "camera_controller.h"
 
@@ -139,7 +143,7 @@ int CameraController::recording_error()
     return err_state_;
 }
 
-std::string CameraController::MakeFilePath(std::chrono::time_point<std::chrono::system_clock> time, std::string filename)
+std::string CameraController::MakeFilePath(std::chrono::time_point<std::chrono::system_clock> time)
 {
     std::string path = directory_;
 
@@ -150,8 +154,11 @@ std::string CameraController::MakeFilePath(std::chrono::time_point<std::chrono::
         path.append("/" + DateString(time) + "/");
     }
 
-    // now append the filename to it
-    path.append(filename);
+    // make sure the directory exists
+    if (mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0 && errno != EEXIST) {
+        // unable to make directory
+        throw std::runtime_error(std::strerror(errno));
+    }
 
     // returned path should be of the form <video_capture_dir>/YYYY-MM-DD/filename
     return path;

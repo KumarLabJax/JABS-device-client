@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <ctime>
+#include <exception>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -21,7 +22,8 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
     // this is set to let the controlling thread know that we encountered an error
     err_state_ = 0;
 
-    std::string filename = config.file_prefix(); // common prefix for all files
+    std::string filename;   // output video filename
+    std::string output_dir; // output directory
 
     // if config.fragment_by_hour is true, current hour == next_hour triggers
     // rolling over to a new file
@@ -33,11 +35,22 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
     uint64_t last_click = 0;    // timestamp of last frame captured
     double current_fps;         // current acquisition framerate
 
+    // setup the output directory
+    try {
+        output_dir = MakeFilePath(chrono::system_clock::now());
+    } catch (const std::runtime_error &e) {
+        // couldn't setup the file path. set error string and return
+        recording_ = false;
+        err_msg_ = "unable to setup output dir: " + std::string(e.what());
+        err_state_ = 1;
+        return;
+    }
+
     // setup filenames for timestamp files
     // file for storing timestamp of each frame
-    std::string timestamp_filename = filename + "_timestamps.txt";
+    std::string timestamp_filename = output_dir + config.file_prefix() + "_timestamps.txt";
     // file for storing timestamp of recording session start
-    std::string timestamp_start_filename = filename + "_start_timestamp.txt";
+    std::string timestamp_start_filename = output_dir + config.file_prefix() + "_start_timestamp.txt";
 
     // open files
     std::ofstream timestamp_file (timestamp_filename, std::ofstream::out);
@@ -54,12 +67,12 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
     // set format for floating point output to the timestamp file
     timestamp_file << std::fixed << std::setprecision(6);
 
+    // attach and configure the camera
     PylonAutoInitTerm autoInitTerm;
     CImageFormatConverter img_converter;
     CGrabResultPtr ptrGrabResult;
     CBaslerGigEInstantCamera camera;
 
-    // attach and configure the camera
     try {
         camera.Attach(CTlFactory::GetInstance().CreateFirstDevice());
         // customConfig will be managed by the Basler API so we are not using a smart pointer
@@ -75,6 +88,7 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
         err_state_ = 1;
         return;
     }
+    // done configuring camera
 
     // save the start time of the recording session
     auto start_time = chrono::system_clock::now();
@@ -82,11 +96,11 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
     session_start_.store(start_time.time_since_epoch());
     timestamp_start_file << "Recording started at Local Time: " << std::ctime(&t);
 
-    // setup the filename for the video file
-    filename = MakeFilePath(start_time, config.file_prefix());
     if (config.fragment_by_hour()) {
         next_hour = (GetCurrentHour(start_time) + 1) % 24;
-        filename.append("_" + timestamp(start_time));
+        filename = output_dir + config.file_prefix() + "_" + timestamp(start_time);
+    } else {
+        filename = output_dir + config.file_prefix();
     }
 
     VideoWriter video_writer(filename, config);
@@ -157,8 +171,7 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
         // check to see if we need to roll over to a new file
         if (config.fragment_by_hour() && GetCurrentHour() == next_hour) {
             start_time = chrono::system_clock::now();
-            filename = MakeFilePath(start_time, config.file_prefix());
-            filename.append("_" + timestamp(start_time));
+            filename = output_dir + config.file_prefix() + "_" + timestamp(start_time);
 
             // setup a VideoWriter to the new filename:
             video_writer = VideoWriter(filename, config);
