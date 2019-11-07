@@ -95,6 +95,7 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
     std::time_t t = chrono::system_clock::to_time_t(start_time);
     session_start_.store(start_time.time_since_epoch());
     timestamp_start_file << "Recording started at Local Time: " << std::ctime(&t);
+    timestamp_start_file.close();
 
     if (config.fragment_by_hour()) {
         next_hour = (GetCurrentHour(start_time) + 1) % 24;
