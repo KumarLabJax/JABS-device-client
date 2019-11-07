@@ -18,7 +18,7 @@ bool Validate(std::string name)
 }
 } //namespace codecs
 
-CameraController::CameraController(const std::string &directory) : directory_(directory) {std::cout <<"initial session iD" << session_id_ << std::endl;}
+CameraController::CameraController(const std::string &directory) : directory_(directory) {}
   
 CameraController::~CameraController() {
     
