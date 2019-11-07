@@ -92,7 +92,7 @@ int main(int argc, char **argv)
     std::chrono::seconds sleep_time; ///< time to wait between status update calls to API, in seconds
     SysInfo system_info;             ///< information about the host system (memory, disk, load)
     int rval;                        ///< used to check return value of some functions
-    bool short_sleep;                ///< indicates that we don't want to sleep before next iteration
+    bool short_sleep;                ///< indicates that we don't want to sleep full amount before next iteration
 
     // setup a signal handler to catch HUP signals which indicate that the
     // config file should be reloaded
