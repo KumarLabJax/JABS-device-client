@@ -216,8 +216,30 @@ public:
      */
     int recording_error();
 
+    /**
+     * @brief set new frame width
+     *
+     * this setter, as well as SetFrameHeight and SetDirectory are used after
+     * processing a HUP signal to re-read the config file
+     *
+     * @param width new width
+     */
+    void SetFrameWidth(int width);
+
+    /**
+     * @brief set new frame width
+     * @param height new frame width
+     */
+    void SetFrameHeight(int height);
+
+    /**
+     * @brief set new output directory
+     * @param dir path to new output directory
+     */
+    void SetDirectory(std::string dir);
+
 protected:
-    const std::string directory_;     ///< directory for storing video
+    std::string directory_;     ///< directory for storing video
     std::atomic_bool stop_recording_ {false}; ///< used to signal to the recording thread to terminate early
     std::atomic_bool recording_ {false};      ///< are we recording video?
     std::thread recording_thread_;            ///< current recording thread

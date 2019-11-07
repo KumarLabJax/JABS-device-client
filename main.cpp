@@ -191,8 +191,9 @@ int main(int argc, char **argv)
                 std::clog << SD_ERR << e.what() << std::endl;
                 return 1;
             }
-            //TODO need to implement move assignment for this
-            //camera_controller = PylonCameraController(video_capture_dir, frame_width, frame_height);
+            camera_controller.SetDirectory(video_capture_dir);
+            camera_controller.SetFrameHeight(frame_height);
+            camera_controller.SetFrameWidth(frame_width);
 
             hup_received = false;
         }

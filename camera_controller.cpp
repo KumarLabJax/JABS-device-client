@@ -32,7 +32,7 @@ CameraController::~CameraController() {
         StopRecording();
     }
     
-    // if we are here and the recording_thread_  is still joinable then it means
+    // if we are here and the recording_thread_ is still joinable then it means
     // the recording thread loop finished on its own and set recording_ to
     // false. Call join() to clean up the thread and avoid an exception.
     if (recording_thread_.joinable()) {
@@ -158,6 +158,21 @@ std::string CameraController::MakeFilePath(std::chrono::time_point<std::chrono::
 
     // returned path should be of the form <video_capture_dir>/YYYY-MM-DD/filename
     return path;
+}
+
+void CameraController::SetFrameWidth(int width)
+{
+    frame_width_ = width;
+}
+
+void CameraController::SetFrameHeight(int height)
+{
+    frame_height_ = height;
+}
+
+void CameraController::SetDirectory(std::string dir)
+{
+    directory_ = dir;
 }
 
 // setters for the RecordingSessionConfig class

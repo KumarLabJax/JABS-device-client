@@ -131,7 +131,7 @@ public:
      * @param rhs temporary VideoWriter instance being moved to this VideoWriter
      * @return reference to this VideoWriter
      */
-    VideoWriter &operator=(VideoWriter &&rhs);
+    VideoWriter& operator=(VideoWriter&& rhs);
 
 
     /**
@@ -140,7 +140,7 @@ public:
      * constructs a new VideoWriter from a temporary VideoWriter instance moving
      * ownership of smart pointer members to new VideoWriter
      */
-    VideoWriter(VideoWriter &&);
+    VideoWriter(VideoWriter&&);
 
     // delete the copy constructor and copy operator since they won't work with
     // a class with std::unique_ptr members
