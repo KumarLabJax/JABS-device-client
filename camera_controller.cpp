@@ -18,7 +18,10 @@ bool Validate(std::string name)
 }
 } //namespace codecs
 
-CameraController::CameraController(const std::string &directory) : directory_(directory) {}
+CameraController::CameraController(const std::string &directory, int frame_width, int frame_height) :
+    directory_(directory),
+    frame_width_(frame_width),
+    frame_height_(frame_height) {}
   
 CameraController::~CameraController() {
     
@@ -179,16 +182,6 @@ void CameraController::RecordingSessionConfig::set_duration(std::chrono::seconds
         throw std::invalid_argument("duration must be at least one second");
     }
     duration_ = duration;
-}
-
-void CameraController::RecordingSessionConfig::set_frame_height(size_t height)
-{
-    frame_height_ = height;
-}
-
-void CameraController::RecordingSessionConfig::set_frame_width(size_t width)
-{
-    frame_width_ = width;
 }
 
 void CameraController::RecordingSessionConfig::set_pixel_format(const std::string &format)

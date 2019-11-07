@@ -63,7 +63,7 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
     try {
         camera.Attach(CTlFactory::GetInstance().CreateFirstDevice());
         // customConfig will be managed by the Basler API so we are not using a smart pointer
-        CameraConfiguration *customConfig = new CameraConfiguration(config.frame_width(), config.frame_height(),
+        CameraConfiguration *customConfig = new CameraConfiguration(frame_width_, frame_height_,
                                                                     config.target_fps(), config.pixel_format(), false);
         camera.RegisterConfiguration(customConfig, RegistrationMode_ReplaceAll, Cleanup_Delete);
         camera.MaxNumBuffer = 15;
@@ -89,7 +89,7 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
         filename.append("_" + timestamp(start_time));
     }
 
-    VideoWriter video_writer(filename, config);
+    VideoWriter video_writer(filename, frame_width_, frame_height_, config);
 
     // camera is configured and we're ready to start capturing video
     // start grabbing frames
@@ -161,7 +161,7 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
             filename.append("_" + timestamp(start_time));
 
             // setup a VideoWriter to the new filename:
-            video_writer = VideoWriter(filename, config);
+            video_writer = VideoWriter(filename, frame_width_, frame_height_, config);
 
             next_hour = (GetCurrentHour(start_time) + 1) % 24;
             current_frame = 0;

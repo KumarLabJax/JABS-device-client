@@ -64,12 +64,6 @@ public:
         /// get duration of session
         std::chrono::seconds duration() const {return duration_;}
 
-        /// get frame height
-        size_t frame_height() const {return frame_height_;}
-
-        /// get frame width
-        size_t frame_width() const {return frame_width_;}
-
         /// get pixel format as string
         const std::string& pixel_format() const {return pixel_format_;}
 
@@ -96,12 +90,6 @@ public:
 
         /// set session duration in seconds
         void set_duration(std::chrono::seconds duration);
-
-        /// set frame height
-        void set_frame_height(size_t height);
-
-        /// set frame width
-        void set_frame_width(size_t width);
 
         /// set pixel format
         void set_pixel_format(const std::string &format);
@@ -133,12 +121,6 @@ public:
         /// seconds and conversion to seconds will happen automatically
         std::chrono::seconds duration_;
 
-        /// height of frame in pixels
-        size_t frame_height_ = 800;
-
-        /// width of frame in pixels
-        size_t frame_width_ = 800;
-
         /// pixel format
         std::string pixel_format_ = pixel_types::YUV420P;
 
@@ -158,8 +140,10 @@ public:
      * @brief construct a new CameraController
      *
      * @param directory base video capture directory
+     * @param frame_height
+     * @param frame_width
      */
-    CameraController(const std::string &directory);
+    CameraController(const std::string &directory, int frame_height, int frame_width);
 
     /**
      * @brief destructor for CameraController, if the destructor is called
@@ -243,7 +227,8 @@ protected:
     std::string err_msg_;  ///< error message if recording_err_
     int err_state_;       ///< error state of last completed recording session
     std::mutex mutex_;    ///< mutex for protecting some variables shared by controlling thread and recording thread
-
+    int frame_width_;  ///< frame width, loaded from config file
+    int frame_height_; ///< frame height, loaded from config file
 
     /**
      * @brief generates a timestamp string for use in filenames.

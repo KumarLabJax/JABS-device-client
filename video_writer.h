@@ -119,7 +119,7 @@ using packet = std::unique_ptr<AVPacket, AVPacketDeleter>;
 
 class VideoWriter {
 public:
-    VideoWriter(const std::string& filename, const CameraController::RecordingSessionConfig& config);
+    VideoWriter(const std::string& filename, int frame_width, int frame_height, const CameraController::RecordingSessionConfig& config);
 
     /**
      * @brief destructor -- will make sure buffers are flushed
