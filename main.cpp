@@ -190,6 +190,10 @@ int main(int argc, char **argv)
                 std::clog << SD_ERR << e.what() << std::endl;
                 return 1;
             }
+            if (!camera_controller.recording()) {
+                //TODO need to implement move assignment for this
+                //camera_controller = PylonCameraController(video_capture_dir, frame_width, frame_height);
+            }
             hup_received = false;
         }
     
