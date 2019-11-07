@@ -170,8 +170,9 @@ int main(int argc, char **argv)
     // main loop
     while (1) {
     
-        // if we've received a HUP signal then reload the configuration file
-        if (hup_received) {
+        // if we've received a HUP signal, and we aren't busy recording then
+        // reload the configuration file
+        if (hup_received && !camera_controller.recording()) {
             system_info.ClearMounts();
             rval = setConfig(config_path, sleep_time, video_capture_dir, api_uri, frame_width, frame_height);
             if (rval > 0) {
@@ -190,10 +191,9 @@ int main(int argc, char **argv)
                 std::clog << SD_ERR << e.what() << std::endl;
                 return 1;
             }
-            if (!camera_controller.recording()) {
-                //TODO need to implement move assignment for this
-                //camera_controller = PylonCameraController(video_capture_dir, frame_width, frame_height);
-            }
+            //TODO need to implement move assignment for this
+            //camera_controller = PylonCameraController(video_capture_dir, frame_width, frame_height);
+
             hup_received = false;
         }
     
