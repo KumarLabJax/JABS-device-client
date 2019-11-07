@@ -227,7 +227,8 @@ int main(int argc, char **argv)
 
         free(svr_command);
 
-        // sleep until next iteration
+        // sleep until next iteration. if we are actively working commands,
+        // don't sleep very long
         if (short_sleep) {
             std::this_thread::sleep_for(std::chrono::seconds(1));
         } else {
