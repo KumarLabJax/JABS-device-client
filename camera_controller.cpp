@@ -1,13 +1,17 @@
 // Copyright 2019, The Jackson Laboratory, Bar Harbor, Maine - all rights reserved
 
 #include <algorithm>
+#include <cerrno>
 #include <chrono>
+#include <cstring>
 #include <iomanip>
 #include <iostream>
 #include <numeric>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+
+#include <sys/stat.h>
 
 #include "camera_controller.h"
 
@@ -18,7 +22,10 @@ bool Validate(std::string name)
 }
 } //namespace codecs
 
-CameraController::CameraController(const std::string &directory) : directory_(directory) {}
+CameraController::CameraController(const std::string &directory, int frame_width, int frame_height) :
+    directory_(directory),
+    frame_width_(frame_width),
+    frame_height_(frame_height) {}
   
 CameraController::~CameraController() {
     
@@ -29,7 +36,7 @@ CameraController::~CameraController() {
         StopRecording();
     }
     
-    // if we are here and the recording_thread_  is still joinable then it means
+    // if we are here and the recording_thread_ is still joinable then it means
     // the recording thread loop finished on its own and set recording_ to
     // false. Call join() to clean up the thread and avoid an exception.
     if (recording_thread_.joinable()) {
@@ -140,7 +147,7 @@ int CameraController::recording_error() const
     return err_state_;
 }
 
-std::string CameraController::MakeFilePath(std::chrono::time_point<std::chrono::system_clock> time, std::string filename)
+std::string CameraController::MakeFilePath(std::chrono::time_point<std::chrono::system_clock> time)
 {
     std::string path = directory_;
 
@@ -151,8 +158,11 @@ std::string CameraController::MakeFilePath(std::chrono::time_point<std::chrono::
         path.append("/" + DateString(time) + "/");
     }
 
-    // now append the filename to it
-    path.append(filename);
+    // make sure the directory exists
+    if (mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0 && errno != EEXIST) {
+        // unable to make directory
+        throw std::runtime_error(std::strerror(errno));
+    }
 
     // returned path should be of the form <video_capture_dir>/YYYY-MM-DD/filename
     return path;
@@ -164,6 +174,21 @@ void CameraController::ClearSession()
         elapsed_time_ = std::chrono::seconds::zero();
         session_id_ = -1;
     }
+}
+
+void CameraController::SetFrameWidth(int width)
+{
+    frame_width_ = width;
+}
+
+void CameraController::SetFrameHeight(int height)
+{
+    frame_height_ = height;
+}
+
+void CameraController::SetDirectory(std::string dir)
+{
+    directory_ = dir;
 }
 
 // setters for the RecordingSessionConfig class
@@ -193,16 +218,6 @@ void CameraController::RecordingSessionConfig::set_duration(std::chrono::seconds
 void CameraController::RecordingSessionConfig::set_session_id(uint32_t session_id)
 {
     session_id_ = session_id;
-}
-
-void CameraController::RecordingSessionConfig::set_frame_height(size_t height)
-{
-    frame_height_ = height;
-}
-
-void CameraController::RecordingSessionConfig::set_frame_width(size_t width)
-{
-    frame_width_ = width;
 }
 
 void CameraController::RecordingSessionConfig::set_codec(std::string codec)

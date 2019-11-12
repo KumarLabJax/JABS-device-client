@@ -67,12 +67,6 @@ public:
         /// get session ID
         int session_id() const {return session_id_;}
 
-        /// get frame height
-        size_t frame_height() const {return frame_height_;}
-
-        /// get frame width
-        size_t frame_width() const {return frame_width_;}
-
         /// get pixel format as string
         const std::string& pixel_format() const {return pixel_format_;}
 
@@ -102,12 +96,6 @@ public:
 
         /// set session ID
         void set_session_id(uint32_t);
-
-        /// set frame height
-        void set_frame_height(size_t height);
-
-        /// set frame width
-        void set_frame_width(size_t width);
 
         /// set codec
         void set_codec(std::string codec);
@@ -139,12 +127,6 @@ public:
         /// session ID
         int session_id_ = -1;
 
-        /// height of frame in pixels
-        size_t frame_height_ = 800;
-
-        /// width of frame in pixels
-        size_t frame_width_ = 800;
-
         /// pixel format
         std::string pixel_format_ = pixel_types::YUV420P;
 
@@ -164,8 +146,10 @@ public:
      * @brief construct a new CameraController
      *
      * @param directory base video capture directory
+     * @param frame_height
+     * @param frame_width
      */
-    CameraController(const std::string &directory);
+    CameraController(const std::string &directory, int frame_height, int frame_width);
 
     /**
      * @brief destructor for CameraController, if the destructor is called
@@ -252,8 +236,30 @@ public:
      */
     void ClearSession();
 
+    /**
+     * @brief set new frame width
+     *
+     * this setter, as well as SetFrameHeight and SetDirectory are used after
+     * processing a HUP signal to re-read the config file
+     *
+     * @param width new width
+     */
+    void SetFrameWidth(int width);
+
+    /**
+     * @brief set new frame width
+     * @param height new frame width
+     */
+    void SetFrameHeight(int height);
+
+    /**
+     * @brief set new output directory
+     * @param dir path to new output directory
+     */
+    void SetDirectory(std::string dir);
+
 protected:
-    const std::string directory_;     ///< directory for storing video
+    std::string directory_;     ///< directory for storing video
     std::atomic_bool stop_recording_ {false}; ///< used to signal to the recording thread to terminate early
     std::atomic_bool recording_ {false};      ///< are we recording video?
     std::thread recording_thread_;            ///< current recording thread
@@ -264,7 +270,8 @@ protected:
     std::string err_msg_; ///< error message if recording_err_
     int err_state_;       ///< error state of last completed recording session
     std::mutex mutex_;    ///< mutex for protecting some variables shared by controlling thread and recording thread
-
+    int frame_width_;  ///< frame width, loaded from config file
+    int frame_height_; ///< frame height, loaded from config file
 
     /**
      * @brief generates a timestamp string for use in filenames.
@@ -294,12 +301,11 @@ protected:
     std::string DateString(std::chrono::time_point<std::chrono::system_clock> time);
 
     /**
-     * @brief make a file path using the recording directory, a date string, and a given filename
+     * @brief make a directory using the recording directory and a date string
      * @param time sytem time to use to generate a date string
-     * @param filename filename
-     * @return
+     * @return path
      */
-    std::string MakeFilePath(std::chrono::time_point<std::chrono::system_clock> time, std::string filename);
+    std::string MakeFilePath(std::chrono::time_point<std::chrono::system_clock> time);
 
     /**
      * @brief get hour using a given system clock time

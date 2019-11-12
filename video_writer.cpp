@@ -41,7 +41,7 @@ VideoWriter::VideoWriter(VideoWriter &&o) : ffcodec_(o.ffcodec_), apply_filter_(
 // parameter constructor for creating configured VideoWriters
 // this is the only way to construct a VideoWriter other than through a move
 // assignment or move constructor
-VideoWriter::VideoWriter(const std::string& filename, const CameraController::RecordingSessionConfig& config)
+VideoWriter::VideoWriter(const std::string& filename, int frame_width, int frame_height, const CameraController::RecordingSessionConfig& config)
 {
     // make sure that config.codec is something we support
     // for now we are only supporting LIBX264
@@ -67,8 +67,8 @@ VideoWriter::VideoWriter(const std::string& filename, const CameraController::Re
     }
 
     // setup codec_context_
-    codec_context_->width = config.frame_width();
-    codec_context_->height = config.frame_height();
+    codec_context_->width = frame_width;
+    codec_context_->height = frame_height;
     codec_context_->time_base = (AVRational){1, config.target_fps()};
     codec_context_->framerate = (AVRational){config.target_fps(), 1};
     codec_context_->global_quality = 0;
@@ -130,15 +130,18 @@ VideoWriter::VideoWriter(const std::string& filename, const CameraController::Re
 
 VideoWriter::~VideoWriter()
 {
-    // flush buffers
-    if (apply_filter_) {
-        int rval = av_buffersrc_write_frame(buffersrc_ctx_, NULL);
-        if (rval < 0) {
-            std::cerr << "av_bufferserc_write_frame() returned " << rval << std::endl;
+    // need to make sure this doesn't get called on an object that's been moved
+    if (codec_context_.get()) {
+        // flush buffers
+        if (apply_filter_) {
+            int rval = av_buffersrc_write_frame(buffersrc_ctx_, NULL);
+            if (rval < 0) {
+                std::cerr << "av_bufferserc_write_frame() returned " << rval << std::endl;
+            }
         }
+        apply_filter_ = false;
+        Encode((AVFrame*)NULL);
     }
-    apply_filter_ = false;
-    Encode((AVFrame*)NULL);
 }
 
 void VideoWriter::InitFilters()
