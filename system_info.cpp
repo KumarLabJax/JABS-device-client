@@ -8,6 +8,8 @@
 #include <sys/statvfs.h>
 #include <unistd.h>
 #include <assert.h>
+#include <stdlib.h>
+#include <sys/utsname.h>
 
 #include "system_info.h"
 
@@ -20,6 +22,22 @@ SysInfo::SysInfo(void)
 
     // get the amount of physical RAM -- this won't change so we don't need to update
     mem_total_ = system_info.totalram * system_info.mem_unit / 1024;
+
+    // get the release. We use the first line of /etc/nv_tegra_release if it is available
+    // and accessible, otherwise we fall back to using the Linux Kernel release string
+    std::ifstream release_file("/etc/nv_tegra_release");
+    if (release_file) {
+        std::getline(release_file, this->release_);
+    } else {
+        struct utsname buf;
+        if (uname(&buf) != 0) {
+            // nv_tegra_release wasn't available and we were unable to get the Kernel
+            // release string. Report an unknown release
+            this->release_ =  std::string("UNKNOWN");
+        } else {
+            this->release_ = std::string(buf.release);
+        }
+    }
 }
 
 /*

@@ -64,6 +64,9 @@ public:
         /// get duration of session
         std::chrono::seconds duration() const {return duration_;}
 
+        /// get session ID
+        int session_id() const {return session_id_;}
+
         /// get pixel format as string
         const std::string& pixel_format() const {return pixel_format_;}
 
@@ -91,8 +94,8 @@ public:
         /// set session duration in seconds
         void set_duration(std::chrono::seconds duration);
 
-        /// set pixel format
-        void set_pixel_format(const std::string &format);
+        /// set session ID
+        void set_session_id(uint32_t);
 
         /// set codec
         void set_codec(std::string codec);
@@ -120,6 +123,9 @@ public:
         /// duration of recording session, can be specified in units greater than
         /// seconds and conversion to seconds will happen automatically
         std::chrono::seconds duration_;
+
+        /// session ID
+        int session_id_ = -1;
 
         /// pixel format
         std::string pixel_format_ = pixel_types::YUV420P;
@@ -158,7 +164,15 @@ public:
      *
      * @returns true if recording thread is active, false otherwise
      */
-    bool recording() { return recording_; }
+    bool recording() const { return recording_; }
+
+    /**
+     * @brief get recording session ID
+     *
+     * @returns session ID of active recording session. return value is undefined
+     * if there is no active recording session
+     */
+    int session_id() const { return session_id_; }
 
     /**
      * @brief start the recording thread
@@ -185,7 +199,7 @@ public:
      *
      * @return time of recording session in seconds
      */
-    std::chrono::seconds elapsed_time();
+    std::chrono::seconds elapsed_time() const;
 
     /**
      * @brief get the average frames per second
@@ -204,7 +218,7 @@ public:
      *
      * @return error string
      */
-    const std::string error_string();
+    const std::string error_string() const;
 
     /**
      * @brief get a recording error code
@@ -214,7 +228,13 @@ public:
      *
      * @return 0 if there were no errors, non-zero value otherwise
      */
-    int recording_error();
+    int recording_error() const;
+
+
+    /**
+     * clear information from previous recording session
+     */
+    void ClearSession();
 
     /**
      * @brief set new frame width
@@ -246,7 +266,8 @@ protected:
     std::chrono::seconds elapsed_time_;   ///< duration of completed recording session
     std::atomic<std::chrono::high_resolution_clock::duration> session_start_;
     std::vector<double> moving_avg_;  ///<  buffer storing fps for last N frames captured where N is the target framerate
-    std::string err_msg_;  ///< error message if recording_err_
+    int session_id_ {-1}; ///< stores session ID if current recording session (if there is one)
+    std::string err_msg_; ///< error message if recording_err_
     int err_state_;       ///< error state of last completed recording session
     std::mutex mutex_;    ///< mutex for protecting some variables shared by controlling thread and recording thread
     int frame_width_;  ///< frame width, loaded from config file

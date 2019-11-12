@@ -85,6 +85,7 @@ bool CameraController::StartRecording(const RecordingSessionConfig& config)
         return false;
     }
 
+    session_id_ = config.session_id();
     elapsed_time_ = std::chrono::seconds::zero();
 
     // avoid resizing moving_avg_ during acquisition loop since we already
@@ -114,7 +115,7 @@ void CameraController::StopRecording() {
     }
 }
 
-std::chrono::seconds CameraController::elapsed_time()
+std::chrono::seconds CameraController::elapsed_time() const
 {
     if (recording_) {
         // recording thread is still running, use session_start_ and current
@@ -136,12 +137,12 @@ double CameraController::avg_fps()
     return avg;
 }
 
-const std::string CameraController::error_string()
+const std::string CameraController::error_string() const
 {
     return err_msg_;
 }
 
-int CameraController::recording_error()
+int CameraController::recording_error() const
 {
     return err_state_;
 }
@@ -165,6 +166,14 @@ std::string CameraController::MakeFilePath(std::chrono::time_point<std::chrono::
 
     // returned path should be of the form <video_capture_dir>/YYYY-MM-DD/filename
     return path;
+}
+
+void CameraController::ClearSession()
+{
+    if (!recording_) {
+        elapsed_time_ = std::chrono::seconds::zero();
+        session_id_ = -1;
+    }
 }
 
 void CameraController::SetFrameWidth(int width)
@@ -206,12 +215,9 @@ void CameraController::RecordingSessionConfig::set_duration(std::chrono::seconds
     duration_ = duration;
 }
 
-void CameraController::RecordingSessionConfig::set_pixel_format(const std::string &format)
+void CameraController::RecordingSessionConfig::set_session_id(uint32_t session_id)
 {
-    if (!pixel_types::Validate(format)) {
-        throw std::invalid_argument("invalid pixel format");
-    }
-    pixel_format_ = format;
+    session_id_ = session_id;
 }
 
 void CameraController::RecordingSessionConfig::set_codec(std::string codec)

@@ -4,6 +4,8 @@
 #define STATUS_UPDATE_H
 
 #include "system_info.h"
+#include "server_command.h"
+#include "camera_controller.h"
 
 /**
  * @brief send a status update message to the server
@@ -13,6 +15,8 @@
  *
  * @return void
  */
-void send_status_update(SysInfo system_info, const std::string api_url);
+ServerCommand* send_status_update(SysInfo system_info,
+    CameraController& camera_controller,
+    const std::string api_url);
 
 #endif

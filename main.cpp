@@ -29,6 +29,7 @@
 #include "system_info.h"
 #include "ltm_exceptions.h"
 #include "pylon_camera.h"
+#include "server_command.h"
 
 // default update interval (in seconds) if it isn't specified in the config file
 const unsigned int kDefaultSleep = 30;
@@ -96,11 +97,13 @@ int main(int argc, char **argv)
     std::string video_capture_dir;   ///< path to video capture directory, will be set from a config file
     std::string api_uri;             ///< URI for webservice API
     std::chrono::seconds sleep_time; ///< time to wait between status update calls to API, in seconds
-    int frame_width;              ///< frame width from config file
-    int frame_height;             ///< frame height from config file
+    int frame_width;                 ///< frame width from config file
+    int frame_height;                ///< frame height from config file
 
     SysInfo system_info;             ///< information about the host system (memory, disk, load)
     int rval;                        ///< used to check return value of some functions
+    bool short_sleep;                ///< indicates that we don't want to sleep full amount before next iteration
+
     
     // setup a signal handler to catch HUP signals which indicate that the
     // config file should be reloaded
@@ -169,6 +172,7 @@ int main(int argc, char **argv)
     
     // main loop
     while (1) {
+        short_sleep = false;
     
         // if we've received a HUP signal, and we aren't busy recording then
         // reload the configuration file
@@ -202,11 +206,56 @@ int main(int argc, char **argv)
         system_info.Sample(); 
         
         // send updated status to the server
-        send_status_update(system_info, api_uri);
-        
-        // sleep until next iteration
-        std::this_thread::sleep_for(std::chrono::seconds(sleep_time));
+        ServerCommand* svr_command = send_status_update(system_info, camera_controller, api_uri);
+
+        switch (svr_command->command()) {
+            case CommandTypes::NOOP:
+                std::clog << SD_DEBUG << "NOOP" << std::endl;
+                break;
+            case CommandTypes::START_RECORDING:
+            {
+                std::clog << SD_DEBUG << "START_RECORDING" << std::endl;
+
+                // cast the svr_command pointer to a RecordCommand* so we can
+                // access the parameters() method.
+                RecordingParameters recording_parameters = static_cast<RecordCommand*>(svr_command)->parameters();
+
+                // setup recording session configuration
+                PylonCameraController::RecordingSessionConfig config;
+                config.set_file_prefix(recording_parameters.file_prefix);
+                config.set_duration(std::chrono::seconds(recording_parameters.duration));
+                config.set_fragment_by_hour(recording_parameters.fragment_hourly);
+                config.set_session_id(recording_parameters.session_id);
+
+                camera_controller.StartRecording(config);
+                short_sleep = true;
+                break;
+            }
+            case CommandTypes::STOP_RECORDING:
+                std::clog << SD_DEBUG << "STOP_RECORDING" << std::endl;
+                camera_controller.StopRecording();
+                short_sleep = true;
+                break;
+            case CommandTypes::COMPLETE:
+                std::clog << SD_DEBUG << "COMPLETE" << std::endl;
+                camera_controller.ClearSession();
+                short_sleep = true;
+                break;
+            case CommandTypes::UNKNOWN:
+                std::clog << SD_ERR << "Server responded with unknown command" << std::endl;
+                break;
+        }
+
+        free(svr_command);
+
+        // sleep until next iteration. if we are actively working commands,
+        // don't sleep very long
+        if (short_sleep) {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        } else {
+            std::this_thread::sleep_for(std::chrono::seconds(sleep_time));
+        }
+
     }
-    
     return 0;
 }
