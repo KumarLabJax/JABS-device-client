@@ -130,15 +130,18 @@ VideoWriter::VideoWriter(const std::string& filename, const CameraController::Re
 
 VideoWriter::~VideoWriter()
 {
-    // flush buffers
-    if (apply_filter_) {
-        int rval = av_buffersrc_write_frame(buffersrc_ctx_, NULL);
-        if (rval < 0) {
-            std::cerr << "av_bufferserc_write_frame() returned " << rval << std::endl;
+    // need to make sure this doesn't get called on an object that's been moved
+    if (codec_context_.get()) {
+        // flush buffers
+        if (apply_filter_) {
+            int rval = av_buffersrc_write_frame(buffersrc_ctx_, NULL);
+            if (rval < 0) {
+                std::cerr << "av_bufferserc_write_frame() returned " << rval << std::endl;
+            }
         }
+        apply_filter_ = false;
+        Encode((AVFrame*)NULL);
     }
-    apply_filter_ = false;
-    Encode((AVFrame*)NULL);
 }
 
 void VideoWriter::InitFilters()
