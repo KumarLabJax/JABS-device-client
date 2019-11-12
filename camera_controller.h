@@ -273,12 +273,11 @@ protected:
     std::string DateString(std::chrono::time_point<std::chrono::system_clock> time);
 
     /**
-     * @brief make a file path using the recording directory, a date string, and a given filename
+     * @brief make a directory using the recording directory and a date string
      * @param time sytem time to use to generate a date string
-     * @param filename filename
-     * @return
+     * @return path
      */
-    std::string MakeFilePath(std::chrono::time_point<std::chrono::system_clock> time, std::string filename);
+    std::string MakeFilePath(std::chrono::time_point<std::chrono::system_clock> time);
 
     /**
      * @brief get hour using a given system clock time
