@@ -97,12 +97,13 @@ int main(int argc, char **argv)
     std::string video_capture_dir;   ///< path to video capture directory, will be set from a config file
     std::string api_uri;             ///< URI for webservice API
     std::chrono::seconds sleep_time; ///< time to wait between status update calls to API, in seconds
+    int frame_width;                 ///< frame width from config file
+    int frame_height;                ///< frame height from config file
+
     SysInfo system_info;             ///< information about the host system (memory, disk, load)
     int rval;                        ///< used to check return value of some functions
     bool short_sleep;                ///< indicates that we don't want to sleep full amount before next iteration
 
-    int frame_width;              ///< frame width from config file
-    int frame_height;             ///< frame height from config file
     
     // setup a signal handler to catch HUP signals which indicate that the
     // config file should be reloaded
