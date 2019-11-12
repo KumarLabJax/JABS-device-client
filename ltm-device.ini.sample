@@ -3,4 +3,8 @@ api = http://bhltms-dev.jax.org/api
 update_interval = 30
 [disk]
 video_capture_dir = /media/nvidia/TOSHIBA EXT
+[camera]
+frame_width = 800
+frame_height = 800
+enable_pgi = true
 

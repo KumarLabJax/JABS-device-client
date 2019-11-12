@@ -33,6 +33,9 @@
 // default update interval (in seconds) if it isn't specified in the config file
 const unsigned int kDefaultSleep = 30;
 
+const int kDefaultFrameWidth = 800;
+const int kDefaultFrameHeight = 800;
+
 // used to notify the program that a HUP signal was received
 std::atomic_bool hup_received = { false };
 
@@ -58,7 +61,9 @@ void signalHandler( int signum ) {
 int setConfig(std::string config_path,
               std::chrono::seconds &sleep_time,
               std::string &video_dir, 
-              std::string &api_uri)
+              std::string &api_uri,
+              int &frame_width,
+              int &frame_height)
 {
     INIReader ini_reader(config_path);
     
@@ -69,7 +74,9 @@ int setConfig(std::string config_path,
     sleep_time = std::chrono::seconds(ini_reader.GetInteger("app", "update_interval", kDefaultSleep));
     video_dir = ini_reader.Get("disk", "video_capture_dir", "/tmp");
     api_uri = ini_reader.Get("app", "api", "");
-            
+    frame_width = ini_reader.GetInteger("video", "frame_width", kDefaultFrameWidth);
+    frame_height = ini_reader.GetInteger("video", "frame_height", kDefaultFrameHeight);
+
     return 0;
 }
 
@@ -85,12 +92,15 @@ int setConfig(std::string config_path,
 int main(int argc, char **argv)
 {
    
-    std::string config_path;         ///path to configuration file, will be passed as a program argument
-    std::string video_capture_dir;   ///path to video capture directory, will be set from a config file
-    std::string api_uri;             ///URI for webservice API
-    std::chrono::seconds sleep_time; ///time to wait between status update calls to API, in seconds
-    SysInfo system_info;             ///information about the host system (memory, disk, load)
-    int rval;                        ///used to check return value of some functions
+    std::string config_path;         ///< path to configuration file, will be passed as a program argument
+    std::string video_capture_dir;   ///< path to video capture directory, will be set from a config file
+    std::string api_uri;             ///< URI for webservice API
+    std::chrono::seconds sleep_time; ///< time to wait between status update calls to API, in seconds
+    int frame_width;              ///< frame width from config file
+    int frame_height;             ///< frame height from config file
+
+    SysInfo system_info;             ///< information about the host system (memory, disk, load)
+    int rval;                        ///< used to check return value of some functions
     
     // setup a signal handler to catch HUP signals which indicate that the
     // config file should be reloaded
@@ -122,7 +132,7 @@ int main(int argc, char **argv)
     }
 
 
-    rval = setConfig(config_path, sleep_time, video_capture_dir, api_uri);
+    rval = setConfig(config_path, sleep_time, video_capture_dir, api_uri, frame_width, frame_height);
     if (rval > 0) {
         std::clog << SD_ERR << "Error parsing config file" << std::endl;
         return 1;
@@ -136,7 +146,12 @@ int main(int argc, char **argv)
     if (api_uri.empty()) {
         std::clog << SD_ERR << "'api' is a required config file parameter\n";
         return 1;
-    } 
+    }
+
+    if (frame_height <= 0 || frame_width<= 0) {
+        std::clog << SD_ERR << "invalid frame dimensions\n";
+        return 1;
+    }
     
     try {
          system_info.AddMount(video_capture_dir);
@@ -147,7 +162,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    PylonCameraController camera_controller(video_capture_dir);
+    PylonCameraController camera_controller(video_capture_dir, frame_width, frame_height);
     
     // notify systemd that we're done initializing
     sd_notify(0, "READY=1");
@@ -155,10 +170,11 @@ int main(int argc, char **argv)
     // main loop
     while (1) {
     
-        // if we've received a HUP signal then reload the configuration file
-        if (hup_received) {
+        // if we've received a HUP signal, and we aren't busy recording then
+        // reload the configuration file
+        if (hup_received && !camera_controller.recording()) {
             system_info.ClearMounts();
-            rval = setConfig(config_path, sleep_time, video_capture_dir, api_uri);
+            rval = setConfig(config_path, sleep_time, video_capture_dir, api_uri, frame_width, frame_height);
             if (rval > 0) {
                 std::clog << SD_ERR << "Error parsing config file during reload" << std::endl;
                 return 1;
@@ -175,6 +191,10 @@ int main(int argc, char **argv)
                 std::clog << SD_ERR << e.what() << std::endl;
                 return 1;
             }
+            camera_controller.SetDirectory(video_capture_dir);
+            camera_controller.SetFrameHeight(frame_height);
+            camera_controller.SetFrameWidth(frame_width);
+
             hup_received = false;
         }
     

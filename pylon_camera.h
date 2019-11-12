@@ -16,7 +16,8 @@
  */
 class PylonCameraController : public CameraController {
 public:
-    PylonCameraController(const std::string &directory) : CameraController(directory) {}
+    PylonCameraController(const std::string &directory, int frame_width, int frame_height) :
+        CameraController(directory, frame_width, frame_height) {}
 
 private:
 

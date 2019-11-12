@@ -22,7 +22,10 @@ bool Validate(std::string name)
 }
 } //namespace codecs
 
-CameraController::CameraController(const std::string &directory) : directory_(directory) {}
+CameraController::CameraController(const std::string &directory, int frame_width, int frame_height) :
+    directory_(directory),
+    frame_width_(frame_width),
+    frame_height_(frame_height) {}
   
 CameraController::~CameraController() {
     
@@ -33,7 +36,7 @@ CameraController::~CameraController() {
         StopRecording();
     }
     
-    // if we are here and the recording_thread_  is still joinable then it means
+    // if we are here and the recording_thread_ is still joinable then it means
     // the recording thread loop finished on its own and set recording_ to
     // false. Call join() to clean up the thread and avoid an exception.
     if (recording_thread_.joinable()) {
@@ -164,6 +167,21 @@ std::string CameraController::MakeFilePath(std::chrono::time_point<std::chrono::
     return path;
 }
 
+void CameraController::SetFrameWidth(int width)
+{
+    frame_width_ = width;
+}
+
+void CameraController::SetFrameHeight(int height)
+{
+    frame_height_ = height;
+}
+
+void CameraController::SetDirectory(std::string dir)
+{
+    directory_ = dir;
+}
+
 // setters for the RecordingSessionConfig class
 // -- we shoudl add as many validation checks as we can.
 
@@ -186,16 +204,6 @@ void CameraController::RecordingSessionConfig::set_duration(std::chrono::seconds
         throw std::invalid_argument("duration must be at least one second");
     }
     duration_ = duration;
-}
-
-void CameraController::RecordingSessionConfig::set_frame_height(size_t height)
-{
-    frame_height_ = height;
-}
-
-void CameraController::RecordingSessionConfig::set_frame_width(size_t width)
-{
-    frame_width_ = width;
 }
 
 void CameraController::RecordingSessionConfig::set_pixel_format(const std::string &format)
