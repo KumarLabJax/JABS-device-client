@@ -36,8 +36,10 @@ RecordingParameters RecordCommand::parseRecordingParameters(web::json::value pay
         params.file_prefix = "";
     }
     params.fragment_hourly = parameters["fragment_hourly"].as_bool();
+    params.apply_filter = parameters["apply_filter"].as_bool();
     params.duration = parameters["duration"].as_number().to_uint64();
     params.session_id = parameters["session_id"].as_number().to_int32();
+    params.target_fps = parameters["target_fps"].as_number().to_int32();
 
     return params;
 

@@ -22,7 +22,9 @@ enum CommandTypes {
 struct RecordingParameters {
     int session_id;          ///< session ID of recording session device is joining
     size_t duration;         ///< length of recording session in seconds
+    int target_fps;          ///< target frames per second
     bool fragment_hourly;    ///< fragment video files at the top of the hour
+    bool apply_filter;       ///< apply filtering when encoding video
     std::string file_prefix; ///< user specified filename prefix
 };
 

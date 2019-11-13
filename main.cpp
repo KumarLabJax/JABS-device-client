@@ -226,6 +226,8 @@ int main(int argc, char **argv)
                 config.set_duration(std::chrono::seconds(recording_parameters.duration));
                 config.set_fragment_by_hour(recording_parameters.fragment_hourly);
                 config.set_session_id(recording_parameters.session_id);
+                config.set_target_fps(recording_parameters.target_fps);
+                config.set_apply_filter(recording_parameters.apply_filter);
 
                 camera_controller.StartRecording(config);
                 short_sleep = true;
