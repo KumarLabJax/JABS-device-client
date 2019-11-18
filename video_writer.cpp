@@ -33,6 +33,8 @@ VideoWriter & VideoWriter::operator=(VideoWriter &&o)
 VideoWriter::VideoWriter(VideoWriter &&o) : ffcodec_(o.ffcodec_), apply_filter_(o.apply_filter_),
                                             selected_pixel_format_(o.selected_pixel_format_),
                                             stream_(o.stream_),
+                                            buffersink_ctx_(std::move(o.buffersink_ctx_)),
+                                            buffersrc_ctx_(std::move(o.buffersrc_ctx_)),
                                             codec_context_(std::move(o.codec_context_)),
                                             format_context_(std::move(o.format_context_)),
                                             filter_graph_(std::move(o.filter_graph_)) {}
