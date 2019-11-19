@@ -222,7 +222,11 @@ int main(int argc, char **argv)
 
                 // setup recording session configuration
                 PylonCameraController::RecordingSessionConfig config;
-                config.set_file_prefix(recording_parameters.file_prefix);
+                if (!recording_parameters.file_prefix.is_empty()) {
+                    config.set_file_prefix(recording_parameters.file_prefix);
+                } else {
+                    config.set_file_prefix(system_info.hostname());
+                }
                 config.set_duration(std::chrono::seconds(recording_parameters.duration));
                 config.set_fragment_by_hour(recording_parameters.fragment_hourly);
                 config.set_session_id(recording_parameters.session_id);
