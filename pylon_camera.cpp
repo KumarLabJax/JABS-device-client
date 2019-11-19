@@ -48,9 +48,9 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
 
     // setup filenames for timestamp files
     // file for storing timestamp of each frame
-    std::string timestamp_filename = output_dir + config.file_prefix() + "_timestamps.txt";
+    std::string timestamp_filename = output_dir + config.file_prefix() + "timestamps.txt";
     // file for storing timestamp of recording session start
-    std::string timestamp_start_filename = output_dir + config.file_prefix() + "_start_timestamp.txt";
+    std::string timestamp_start_filename = output_dir + config.file_prefix() + "start_timestamp.txt";
 
     // open files
     std::ofstream timestamp_file (timestamp_filename, std::ofstream::out);
@@ -99,7 +99,7 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
 
     if (config.fragment_by_hour()) {
         next_hour = (GetCurrentHour(start_time) + 1) % 24;
-        filename = output_dir + config.file_prefix() + "_" + timestamp(start_time);
+        filename = output_dir + config.file_prefix() + timestamp(start_time);
     } else {
         filename = output_dir + config.file_prefix();
     }
@@ -172,7 +172,7 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
         // check to see if we need to roll over to a new file
         if (config.fragment_by_hour() && GetCurrentHour() == next_hour) {
             start_time = chrono::system_clock::now();
-            filename = output_dir + config.file_prefix() + "_" + timestamp(start_time);
+            filename = output_dir + config.file_prefix() + timestamp(start_time);
 
             // setup a VideoWriter to the new filename:
             video_writer = VideoWriter(filename, frame_width_, frame_height_, config);

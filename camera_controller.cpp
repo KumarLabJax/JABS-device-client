@@ -202,9 +202,13 @@ void CameraController::RecordingSessionConfig::set_target_fps(unsigned int targe
 void CameraController::RecordingSessionConfig::set_file_prefix(const std::string& prefix)
 {
     if (prefix.empty()) {
-        throw std::invalid_argument("file prefix can not be empty");
+        file_prefix_ = "ltm_";
     }
     file_prefix_ = prefix;
+
+    if (file_prefix_.back() != '_') {
+        file_prefix_.append('_');
+    }
 }
 
 void CameraController::RecordingSessionConfig::set_duration(std::chrono::seconds duration)
