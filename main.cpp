@@ -222,7 +222,7 @@ int main(int argc, char **argv)
 
                 // setup recording session configuration
                 PylonCameraController::RecordingSessionConfig config;
-                if (!recording_parameters.file_prefix.is_empty()) {
+                if (!recording_parameters.file_prefix.empty()) {
                     config.set_file_prefix(recording_parameters.file_prefix);
                 } else {
                     config.set_file_prefix(system_info.hostname());
