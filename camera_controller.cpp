@@ -207,7 +207,7 @@ void CameraController::RecordingSessionConfig::set_file_prefix(const std::string
     file_prefix_ = prefix;
 
     if (file_prefix_.back() != '_') {
-        file_prefix_.append('_');
+        file_prefix_.append("_");
     }
 }
 
