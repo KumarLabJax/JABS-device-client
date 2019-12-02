@@ -156,10 +156,18 @@ std::string CameraController::MakeOutputDir(std::chrono::time_point<std::chrono:
 
     // append a directory named <nv_room_string_>/YYYY-MM-DD to the configured recording directory
     if (directory_.back() == '/') {
-        path.append(nv_room_string_ + "/" + DateString(time) + "/");
+        path.append(nv_room_string_);
     } else {
-        path.append("/" + nv_room_string_ + "/" + DateString(time) + "/");
+        path.append("/" + nv_room_string_);
     }
+
+    // make sure the directory exists
+    if (mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0 && errno != EEXIST) {
+        // unable to make directory
+        throw std::runtime_error(std::strerror(errno));
+    }
+
+    path.append("/" + DateString(time) + "/");
 
     // make sure the directory exists
     if (mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0 && errno != EEXIST) {
