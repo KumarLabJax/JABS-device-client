@@ -209,7 +209,7 @@ int main(int argc, char **argv)
         system_info.Sample(); 
         
         // send updated status to the server
-        ServerCommand* svr_command = send_status_update(system_info, camera_controller, appConfig.api_uri);
+        ServerCommand* svr_command = send_status_update(system_info, camera_controller, appConfig.api_uri, appConfig.location);
 
         switch (svr_command->command()) {
             case CommandTypes::NOOP:
