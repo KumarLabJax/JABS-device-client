@@ -89,6 +89,27 @@ AppConfig readConfig(std::string config_path)
     return config;
 }
 
+std::string getNvBoardString(std::string hostname, std::string location)
+{
+    static const std::string not_allowed_chars = "().?'\"[]{}<>;*&^$#@!`~|\t\n%";
+    std::string board_string;
+
+    size_t last_index = hostname.find_last_not_of("0123456789");
+    int nv_num = 0;
+    if (last_index < hostname.length()) {
+        nv_num = std::stoi(hostname.substr(last_index + 1));
+    }
+
+    board_string = "NV" + std::to_string(nv_num) + "-" + location;
+
+    for (unsigned int i = 0; i < not_allowed_chars.length(); ++i)
+    {
+        board_string.erase(std::remove(board_string.begin(), board_string.end(), not_allowed_chars.at(i)), board_string.end());
+    }
+
+    return board_string;
+}
+
 /**
  * @brief program main
  *
@@ -106,6 +127,8 @@ int main(int argc, char **argv)
 
     SysInfo system_info;     ///< information about the host system (memory, disk, load)
     bool short_sleep;        ///< indicates that we don't want to sleep full amount before next iteration
+
+    std::string nv_room_string;
 
     
     // setup a signal handler to catch HUP signals which indicate that the
@@ -168,7 +191,9 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    PylonCameraController camera_controller(appConfig.output_dir, appConfig.frame_width, appConfig.frame_height);
+    nv_room_string = getNvBoardString(system_info.hostname(), appConfig.location);
+
+    PylonCameraController camera_controller(appConfig.output_dir, appConfig.frame_width, appConfig.frame_height, nv_room_string);
     
     // notify systemd that we're done initializing
     sd_notify(0, "READY=1");
@@ -183,6 +208,7 @@ int main(int argc, char **argv)
             system_info.ClearMounts();
             try {
                 appConfig = readConfig(config_path);
+                nv_room_string = getNvBoardString(system_info.hostname(), appConfig.location);
             } catch (const std::runtime_error& error) {
                 std::clog << SD_ERR << "Unable to read config file during reload\n";
                 if (errno > 0) {
@@ -201,6 +227,7 @@ int main(int argc, char **argv)
             camera_controller.SetDirectory(appConfig.output_dir);
             camera_controller.SetFrameHeight(appConfig.frame_height);
             camera_controller.SetFrameWidth(appConfig.frame_width);
+            camera_controller.SetNvRoomString(nv_room_string);
 
             hup_received = false;
         }

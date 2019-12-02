@@ -22,10 +22,11 @@ bool Validate(std::string name)
 }
 } //namespace codecs
 
-CameraController::CameraController(const std::string &directory, int frame_width, int frame_height) :
+CameraController::CameraController(const std::string &directory, int frame_width, int frame_height, const std::string &nv_room_string) :
     directory_(directory),
     frame_width_(frame_width),
-    frame_height_(frame_height) {}
+    frame_height_(frame_height),
+    nv_room_string_(nv_room_string){}
   
 CameraController::~CameraController() {
     
@@ -149,15 +150,15 @@ int CameraController::recording_error() const
     return err_state_;
 }
 
-std::string CameraController::MakeFilePath(std::chrono::time_point<std::chrono::system_clock> time)
+std::string CameraController::MakeOutputDir(std::chrono::time_point<std::chrono::system_clock> time)
 {
     std::string path = directory_;
 
-    // append a directory named YYYY-MM-DD to the configured recording directory
+    // append a directory named <nv_room_string_>/YYYY-MM-DD to the configured recording directory
     if (directory_.back() == '/') {
-        path.append(DateString(time) + "/");
+        path.append(nv_room_string_ + "/" + DateString(time) + "/");
     } else {
-        path.append("/" + DateString(time) + "/");
+        path.append("/" + nv_room_string_ + "/" + DateString(time) + "/");
     }
 
     // make sure the directory exists

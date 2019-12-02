@@ -37,7 +37,7 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
 
     // setup the output directory
     try {
-        output_dir = MakeFilePath(chrono::system_clock::now());
+        output_dir = MakeOutputDir(chrono::system_clock::now());
     } catch (const std::runtime_error &e) {
         // couldn't setup the file path. set error string and return
         recording_ = false;
