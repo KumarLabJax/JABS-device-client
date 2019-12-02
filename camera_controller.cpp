@@ -112,6 +112,8 @@ void CameraController::StopRecording() {
         stop_recording_ = true;
         // wait for the recording thread to finish
         recording_thread_.join();
+        // clear flag
+        stop_recording_ = false;
     }
 }
 
