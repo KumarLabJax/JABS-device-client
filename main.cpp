@@ -35,6 +35,7 @@ struct AppConfig
 {
     std::string output_dir;  ///< path to video capture directory
     std::string api_uri;     ///< URI for webservice API
+    std::string rtmp_uri;    ///< URI for rtmp publishing endpoint
     std::string location;    ///< device location string
     int frame_width;         ///< frame width
     int frame_height;        ///< frame height
@@ -79,6 +80,7 @@ AppConfig readConfig(std::string config_path)
     config.sleep_time = std::chrono::seconds(ini_reader.GetInteger("app", "update_interval", kDefaultSleep));
     config.output_dir = ini_reader.Get("disk", "video_capture_dir", "/tmp");
     config.api_uri = ini_reader.Get("app", "api", "");
+    config.rtmp_uri = ini_reader.Get("streaming", "rtmp", "");
 
     // TODO: consider making these required config parameters and remove defaults
     config.frame_width = ini_reader.GetInteger("video", "frame_width", kDefaultFrameWidth);
