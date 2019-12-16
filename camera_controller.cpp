@@ -22,11 +22,12 @@ bool Validate(std::string name)
 }
 } //namespace codecs
 
-CameraController::CameraController(const std::string &directory, int frame_width, int frame_height, const std::string &nv_room_string) :
+CameraController::CameraController(const std::string &directory, int frame_width, int frame_height, const std::string &nv_room_string, const std::string &rtmp_uri) :
     directory_(directory),
     frame_width_(frame_width),
     frame_height_(frame_height),
-    nv_room_string_(nv_room_string){}
+    nv_room_string_(nv_room_string),
+    rtmp_uri_(rtmp_uri){}
   
 CameraController::~CameraController() {
     

@@ -106,6 +106,19 @@ struct AVPacketDeleter {
     }
 };
 
+/**
+ * custom deleter so that we can have a std::unique_ptr manage an
+ * AVBSFContext pointer
+ */
+struct AVBSFContextDeleter {
+    void operator()(AVBSFContext* c) {
+        if (c) {
+            // we are allocating packets with av_packet_alloc, so we need to free them
+            av_bsf_free(&c);
+        }
+    }
+};
+
 // namespace of various smart pointer types
 // this lets us use `av_pointer::frame foo;` vs `std::unique_ptr<AVFrame, AVFrameDeleter> foo;`
 namespace av_pointer {
@@ -115,11 +128,17 @@ using format_context = std::unique_ptr<AVFormatContext, AVFormatContextDeleter>;
 using in_out = std::unique_ptr<AVFilterInOut, AVFilterInOutDeleter>;
 using filter_graph = std::unique_ptr<AVFilterGraph, AVFilterGraphDeleter>;
 using packet = std::unique_ptr<AVPacket, AVPacketDeleter>;
+using bsf_context = std::unique_ptr<AVBSFContext, AVBSFContextDeleter>;
 }
 
 class VideoWriter {
 public:
-    VideoWriter(const std::string& filename, int frame_width, int frame_height, const CameraController::RecordingSessionConfig& config);
+    VideoWriter(
+        const std::string& filename,
+        const std::string& rtmp_uri,
+        int frame_width,
+        int frame_height,
+        const CameraController::RecordingSessionConfig& config);
 
     /**
      * @brief destructor -- will make sure buffers are flushed
@@ -161,7 +180,16 @@ public:
      */
     void EncodeFrame(uint8_t buffer[], size_t current_frame);
 
+    /**
+     * @brief enable/disable live streaming
+     * @param state new state for live streaming setting
+     */
+    void SetLiveStreaming(bool state) {live_stream_ = state;}
+
 private:
+
+    /// rtmp uri
+    std::string rtmp_uri_;
 
     /// pointer to specified codec
     const AVCodec *ffcodec_;
@@ -169,11 +197,17 @@ private:
     /// flag to indicate if we should send frames through filter graph before encoding
     bool apply_filter_;
 
+    /// enable live streaming
+    bool live_stream_ = {false};
+
     /// specified pixel format
     enum AVPixelFormat selected_pixel_format_;
 
-    /// av stream added to format_contex_. Will get freed up when format_context_ is deleted
+    /// file output stream. Will get freed up when format_context_ is deleted
     AVStream *stream_;
+
+    /// rtmp output stream. Will get freed up when rtmp_format_context_ is deleted
+    AVStream *rtmp_stream_;
 
     /// source for filter graph, will get freed when filter graph is deleted
     AVFilterContext *buffersink_ctx_;
@@ -187,8 +221,12 @@ private:
     av_pointer::codec_context codec_context_;
     /// smart pointer to AVFormatContext
     av_pointer::format_context format_context_;
+    /// smart pointer to AVFormatContext
+    av_pointer::format_context rtmp_format_context_;
     /// smart pointer to AVFilterGraph
     av_pointer::filter_graph filter_graph_;
+    /// smart pointer for AVBSFContext
+    av_pointer::bsf_context bsfc_;
 
     /**
      * @brief initialize filters

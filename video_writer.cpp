@@ -18,35 +18,49 @@ VideoWriter & VideoWriter::operator=(VideoWriter &&o)
 {
     if (this != &o)
     {
+        rtmp_uri_ = o.rtmp_uri_;
         ffcodec_ = o.ffcodec_;
         apply_filter_ = o.apply_filter_;
+        live_stream_ = o.live_stream_;
         selected_pixel_format_ = o.selected_pixel_format_;
         stream_ = o.stream_;
+        rtmp_stream_ = o.rtmp_stream_;
         buffersink_ctx_ = std::move(o.buffersink_ctx_);
         buffersrc_ctx_ = std::move(o.buffersrc_ctx_);
         codec_context_ = std::move(o.codec_context_);
         format_context_ = std::move(o.format_context_);
         filter_graph_ = std::move(o.filter_graph_);
+        bsfc_ = std::move(o.bsfc_);
     }
     return *this;
 }
 
 // move constructor
-VideoWriter::VideoWriter(VideoWriter &&o) : ffcodec_(o.ffcodec_), apply_filter_(o.apply_filter_),
+VideoWriter::VideoWriter(VideoWriter &&o) : rtmp_uri_(o.rtmp_uri_), ffcodec_(o.ffcodec_),
+                                            apply_filter_(o.apply_filter_),
+                                            live_stream_(o.live_stream_),
                                             selected_pixel_format_(o.selected_pixel_format_),
                                             stream_(o.stream_),
+                                            rtmp_stream_(o.rtmp_stream_),
                                             buffersink_ctx_(std::move(o.buffersink_ctx_)),
                                             buffersrc_ctx_(std::move(o.buffersrc_ctx_)),
                                             codec_context_(std::move(o.codec_context_)),
                                             format_context_(std::move(o.format_context_)),
-                                            filter_graph_(std::move(o.filter_graph_)) {}
+                                            rtmp_format_context_(std::move(o.rtmp_format_context_)),
+                                            filter_graph_(std::move(o.filter_graph_)),
+                                            bsfc_(std::move(o.bsfc_)) {}
 
 
 // parameter constructor for creating configured VideoWriters
 // this is the only way to construct a VideoWriter other than through a move
 // assignment or move constructor
-VideoWriter::VideoWriter(const std::string& filename, int frame_width, int frame_height, const CameraController::RecordingSessionConfig& config)
+VideoWriter::VideoWriter(
+    const std::string& filename, const std::string& rtmp_uri,
+    int frame_width, int frame_height,
+    const CameraController::RecordingSessionConfig& config)
 {
+    int r;
+
     // make sure that config.codec is something we support
     // for now we are only supporting LIBX264
     if (config.codec() != codecs::LIBX264) {
@@ -55,6 +69,8 @@ VideoWriter::VideoWriter(const std::string& filename, int frame_width, int frame
 
     std::string full_filename = filename;
     full_filename.append(".avi");
+
+    rtmp_uri_ = rtmp_uri;
 
 
     // lookup specified codec
@@ -102,12 +118,28 @@ VideoWriter::VideoWriter(const std::string& filename, int frame_width, int frame
     }
     codec_context_->pix_fmt = selected_pixel_format_;
 
+    // This flag is required for streaming with rtmp so we have to set it for
+    // the codec. the avi format context does not really want this set, so
+    // we will use a bitstream filter on the AVI output to correct for this
+    codec_context_->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+
+    // setup above mentioned bitstream filter
+    // see documentation here we are more or less doing what the example shows
+    // with the ffmpeg command line: https://ffmpeg.org/ffmpeg-bitstream-filters.html#dump_005fextra
+    AVBSFContext *tmp;
+    r = av_bsf_alloc(av_bsf_get_by_name("dump_extra"), &tmp);
+    if (r < 0) {
+        throw std::runtime_error("unable to allocate bitstream filter context: " + std::string(av_err2str(r)));
+    }
+    // use smart pointer to manage bitstream filter context
+    bsfc_ = av_pointer::bsf_context(tmp);
+
     // Open up the codec
     if (avcodec_open2(codec_context_.get(), ffcodec_, NULL) < 0) {
         throw std::runtime_error("unable to open ffmpeg codec");
     }
 
-    // setup the stream
+    // setup the avi output stream
     AVFormatContext *tmp_f_context;
     avformat_alloc_output_context2(&tmp_f_context, NULL, NULL, full_filename.c_str());
     format_context_ = av_pointer::format_context(tmp_f_context);
@@ -115,15 +147,35 @@ VideoWriter::VideoWriter(const std::string& filename, int frame_width, int frame
     avcodec_parameters_from_context(stream_->codecpar, codec_context_.get());
     stream_->time_base = codec_context_->time_base;
     stream_->r_frame_rate = codec_context_->framerate;
+    bsfc_->par_in = stream_->codecpar;
 
-    /* open the output file, if needed */
-    int r = avio_open(&format_context_->pb, full_filename.c_str(), AVIO_FLAG_WRITE);
+    // open the output file
+    r = avio_open(&format_context_->pb, full_filename.c_str(), AVIO_FLAG_WRITE);
     if (r < 0) {
         throw std::runtime_error("unable to open " + full_filename + " : " + av_err2str(r));
     }
 
     if (avformat_write_header(format_context_.get(), NULL) < 0) {
         throw std::runtime_error("unable to write header");
+    }
+
+    // setup the rtmp_stream
+    avformat_alloc_output_context2(&tmp_f_context, NULL, "flv", rtmp_uri_.c_str());
+    rtmp_format_context_ = av_pointer::format_context(tmp_f_context);
+    rtmp_stream_ = avformat_new_stream(rtmp_format_context_.get(), ffcodec_);
+    avcodec_parameters_from_context(rtmp_stream_->codecpar, codec_context_.get());
+
+    // open rtmp stream
+    //TODO: open this on demand
+    if (!(rtmp_format_context_->flags & AVFMT_NOFILE)) {
+        int r = avio_open(&rtmp_format_context_->pb, rtmp_uri_.c_str(), AVIO_FLAG_WRITE);
+        if (r < 0) {
+            throw std::runtime_error("unable to open " + rtmp_uri_ + " : " + av_err2str(r));
+        }
+    }    
+
+    if (avformat_write_header(rtmp_format_context_.get(), NULL) < 0) {
+        throw std::runtime_error("unable to write header to rtmp stream");
     }
 
     // initialize filter
@@ -345,7 +397,34 @@ void VideoWriter::Encode(AVFrame *frame)
             throw std::runtime_error("error during encoding");
         }
 
-        // write packet
-        av_interleaved_write_frame(format_context_.get(), pkt.get());
+        // clone packet so we can send to the live stream
+        av_pointer::packet stream_pkt(av_packet_clone(pkt.get()));
+
+        // rescale output packet timestamp values from codec to stream timebase
+        stream_pkt->dts = 1;
+
+        av_packet_rescale_ts(stream_pkt.get(), codec_context_->time_base, rtmp_stream_->time_base);
+        rval = av_interleaved_write_frame(rtmp_format_context_.get(), stream_pkt.get());
+        if (rval < 0 ) {
+            std::clog << "error writing frame to rtmp stream: " << av_err2str(rval) << std::endl;
+
+            if (rval == AVERROR(EPIPE)) {
+                // broken pipe --  we lost the connection to the streaming server
+                // try to reconnect
+            } else if (rval == AVERROR(ECONNRESET)) {
+                // streaming server hung up on us
+            }
+        }   
+
+        av_pointer::packet pkt_filtered(av_packet_alloc());
+
+        // use "dump_extra" bitstream filter to add header back to keyframes
+        // this is used because we have to ste global headers to allow for streaming
+        av_bsf_send_packet(bsfc_.get(), pkt.get());
+        av_bsf_receive_packet(bsfc_.get(), pkt_filtered.get());
+
+        // write filtered packet to file
+        av_interleaved_write_frame(format_context_.get(), pkt_filtered.get());
+
     }
 }

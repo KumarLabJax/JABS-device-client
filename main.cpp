@@ -12,7 +12,9 @@
 
 // Copyright 2019, The Jackson Laboratory, Bar Harbor, Maine - all rights reserved
 
+#include <algorithm>
 #include <atomic>
+#include <cctype>
 #include <chrono>
 #include <csignal>
 #include <cerrno>
@@ -20,6 +22,7 @@
 #include <getopt.h>
 #include <iomanip>
 #include <iostream>
+#include <string>
 #include <thread>
 
 #include <systemd/sd-daemon.h>
@@ -112,6 +115,22 @@ std::string getNvBoardString(std::string hostname, std::string location)
     return board_string;
 }
 
+std::string addStreamName(std::string rtmp_uri, std::string hostname)
+{
+    std::string uri = rtmp_uri;
+    std::string host = hostname;
+    std::transform(host.begin(), host.end(), host.begin(),
+                   [](unsigned char c){ return std::tolower(c); });
+
+    if (!rtmp_uri.empty()) {
+        if (rtmp_uri.back() != '/') {
+            uri.append("/");
+        }
+        uri.append(host);
+    }
+    return uri;
+}
+
 /**
  * @brief program main
  *
@@ -195,7 +214,12 @@ int main(int argc, char **argv)
 
     nv_room_string = getNvBoardString(system_info.hostname(), appConfig.location);
 
-    PylonCameraController camera_controller(appConfig.output_dir, appConfig.frame_width, appConfig.frame_height, nv_room_string);
+    PylonCameraController camera_controller(
+        appConfig.output_dir,
+        appConfig.frame_width,
+        appConfig.frame_height,
+        nv_room_string,
+        addStreamName(appConfig.rtmp_uri, system_info.hostname()));
     
     // notify systemd that we're done initializing
     sd_notify(0, "READY=1");
@@ -205,7 +229,8 @@ int main(int argc, char **argv)
         short_sleep = false;
     
         // if we've received a HUP signal, and we aren't busy recording then
-        // reload the configuration file
+        // reload the configuration file. If we are recording, we won't reload
+        // the config until we've stopped.
         if (hup_received && !camera_controller.recording()) {
             system_info.ClearMounts();
             try {
@@ -230,6 +255,7 @@ int main(int argc, char **argv)
             camera_controller.SetFrameHeight(appConfig.frame_height);
             camera_controller.SetFrameWidth(appConfig.frame_width);
             camera_controller.SetNvRoomString(nv_room_string);
+            camera_controller.SetRtmpUri(addStreamName(appConfig.rtmp_uri, system_info.hostname()));
 
             hup_received = false;
         }
@@ -293,7 +319,6 @@ int main(int argc, char **argv)
         } else {
             std::this_thread::sleep_for(std::chrono::seconds(appConfig.sleep_time));
         }
-
     }
     return 0;
 }
