@@ -401,8 +401,6 @@ void VideoWriter::Encode(AVFrame *frame)
         av_pointer::packet stream_pkt(av_packet_clone(pkt.get()));
 
         // rescale output packet timestamp values from codec to stream timebase
-        stream_pkt->dts = 1;
-
         av_packet_rescale_ts(stream_pkt.get(), codec_context_->time_base, rtmp_stream_->time_base);
         rval = av_interleaved_write_frame(rtmp_format_context_.get(), stream_pkt.get());
         if (rval < 0 ) {
