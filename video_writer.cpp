@@ -159,24 +159,8 @@ VideoWriter::VideoWriter(
         throw std::runtime_error("unable to write header");
     }
 
-    // setup the rtmp_stream
-    avformat_alloc_output_context2(&tmp_f_context, NULL, "flv", rtmp_uri_.c_str());
-    rtmp_format_context_ = av_pointer::format_context(tmp_f_context);
-    rtmp_stream_ = avformat_new_stream(rtmp_format_context_.get(), ffcodec_);
-    avcodec_parameters_from_context(rtmp_stream_->codecpar, codec_context_.get());
-
-    // open rtmp stream
-    //TODO: open this on demand
-    if (!(rtmp_format_context_->flags & AVFMT_NOFILE)) {
-        int r = avio_open(&rtmp_format_context_->pb, rtmp_uri_.c_str(), AVIO_FLAG_WRITE);
-        if (r < 0) {
-            throw std::runtime_error("unable to open " + rtmp_uri_ + " : " + av_err2str(r));
-        }
-    }    
-
-    if (avformat_write_header(rtmp_format_context_.get(), NULL) < 0) {
-        throw std::runtime_error("unable to write header to rtmp stream");
-    }
+    //TODO don't call this in constructor -- only open on demand
+    OpenRtmpStream();
 
     // initialize filter
     if (apply_filter_) {
@@ -282,6 +266,29 @@ void VideoWriter::InitFilters()
 
     if (avfilter_graph_config(filter_graph_.get(), NULL) < 0) {
         throw std::runtime_error("unable to configure filter graph");
+    }
+}
+
+void VideoWriter::OpenRtmpStream()
+{
+    // setup the rtmp_stream
+    AVFormatContext *tmp_f_context;
+    avformat_alloc_output_context2(&tmp_f_context, NULL, "flv", rtmp_uri_.c_str());
+    rtmp_format_context_ = av_pointer::format_context(tmp_f_context);
+    rtmp_stream_ = avformat_new_stream(rtmp_format_context_.get(), ffcodec_);
+    avcodec_parameters_from_context(rtmp_stream_->codecpar, codec_context_.get());
+
+    // open rtmp stream
+    //TODO: open this on demand
+    if (!(rtmp_format_context_->flags & AVFMT_NOFILE)) {
+        int r = avio_open(&rtmp_format_context_->pb, rtmp_uri_.c_str(), AVIO_FLAG_WRITE);
+        if (r < 0) {
+            throw std::runtime_error("unable to open " + rtmp_uri_ + " : " + av_err2str(r));
+        }
+    }
+
+    if (avformat_write_header(rtmp_format_context_.get(), NULL) < 0) {
+        throw std::runtime_error("unable to write header to rtmp stream");
     }
 }
 
