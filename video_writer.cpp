@@ -147,7 +147,7 @@ VideoWriter::VideoWriter(
     avcodec_parameters_from_context(stream_->codecpar, codec_context_.get());
     stream_->time_base = codec_context_->time_base;
     stream_->r_frame_rate = codec_context_->framerate;
-    bsfc_->par_in = stream_->codecpar;
+    avcodec_parameters_copy(bsfc_->par_in, bsfc_->par_in);
 
     // open the output file
     r = avio_open(&format_context_->pb, full_filename.c_str(), AVIO_FLAG_WRITE);
@@ -419,10 +419,10 @@ void VideoWriter::Encode(AVFrame *frame)
         // use "dump_extra" bitstream filter to add header back to keyframes
         // this is used because we have to ste global headers to allow for streaming
         av_bsf_send_packet(bsfc_.get(), pkt.get());
-        av_bsf_receive_packet(bsfc_.get(), pkt_filtered.get());
 
-        // write filtered packet to file
-        av_interleaved_write_frame(format_context_.get(), pkt_filtered.get());
-
+        while ((rval = av_bsf_receive_packet(bsfc_.get(), pkt_filtered.get())) == 0) {
+            // write filtered packet to file
+            av_interleaved_write_frame(format_context_.get(), pkt_filtered.get());
+        }
     }
 }
