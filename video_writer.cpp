@@ -324,7 +324,7 @@ av_pointer::frame VideoWriter::InitFrame() {
 void VideoWriter::EncodeFrame(uint8_t buffer[], size_t current_frame,  bool stream)
 {
     if (selected_pixel_format_ == AV_PIX_FMT_YUV420P) {
-        EncodeYuv420p(buffer, current_frame, stream);
+        EncodeYuv420p(buffer, current_frame);
     } else {
         // unknown pixel format, we shouldn't get this far with an unknown pixel format
         // this will let us know we haven't implemented the encoder yet
@@ -353,7 +353,7 @@ void VideoWriter::EncodeYuv420p(uint8_t buffer[], size_t current_frame)
     }
 
     // send frame to encoder
-    Encode(frame.get(), stream);
+    Encode(frame.get());
 }
 
 // send the frame to the encoder, filtering first if necessary
