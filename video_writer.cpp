@@ -21,7 +21,6 @@ VideoWriter & VideoWriter::operator=(VideoWriter &&o)
         rtmp_uri_ = o.rtmp_uri_;
         ffcodec_ = o.ffcodec_;
         apply_filter_ = o.apply_filter_;
-        live_stream_ = o.live_stream_;
         selected_pixel_format_ = o.selected_pixel_format_;
         stream_ = o.stream_;
         rtmp_stream_ = o.rtmp_stream_;
@@ -38,7 +37,6 @@ VideoWriter & VideoWriter::operator=(VideoWriter &&o)
 // move constructor
 VideoWriter::VideoWriter(VideoWriter &&o) : rtmp_uri_(o.rtmp_uri_), ffcodec_(o.ffcodec_),
                                             apply_filter_(o.apply_filter_),
-                                            live_stream_(o.live_stream_),
                                             selected_pixel_format_(o.selected_pixel_format_),
                                             stream_(o.stream_),
                                             rtmp_stream_(o.rtmp_stream_),
@@ -335,7 +333,7 @@ void VideoWriter::EncodeFrame(uint8_t buffer[], size_t current_frame,  bool stre
 }
 
 // encode a frame using Yuv420p pixel format
-void VideoWriter::EncodeYuv420p(uint8_t buffer[], size_t current_frame,  bool stream)
+void VideoWriter::EncodeYuv420p(uint8_t buffer[], size_t current_frame)
 {
     // create smart pointer to frame
     auto frame = InitFrame();
@@ -359,7 +357,7 @@ void VideoWriter::EncodeYuv420p(uint8_t buffer[], size_t current_frame,  bool st
 }
 
 // send the frame to the encoder, filtering first if necessary
-void VideoWriter::Encode(AVFrame *frame,  bool stream)
+void VideoWriter::Encode(AVFrame *frame)
 {
     int rval;
     if (!apply_filter_) {

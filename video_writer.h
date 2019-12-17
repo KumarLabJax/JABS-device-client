@@ -181,12 +181,6 @@ public:
      */
     void EncodeFrame(uint8_t buffer[], size_t current_frame, bool stream);
 
-    /**
-     * @brief enable/disable live streaming
-     * @param state new state for live streaming setting
-     */
-    void SetLiveStreaming(bool state) {live_stream_ = state;}
-
 private:
 
     /// rtmp uri
@@ -197,9 +191,6 @@ private:
 
     /// flag to indicate if we should send frames through filter graph before encoding
     bool apply_filter_;
-
-    /// enable live streaming
-    bool live_stream_ = {false};
 
     /// specified pixel format
     enum AVPixelFormat selected_pixel_format_;
@@ -264,17 +255,15 @@ private:
     /**
      * @brief encodes frame and write to file
      * @param frame AVFrame pointer containing frame data
-     * @param stream if true also send frame to rtmp stream
      */
-    void Encode(AVFrame *frame, bool stream);
+    void Encode(AVFrame *frame);
 
     /**
      * @brief encode a raw Yuv420p frame
      * @param buffer raw frame data from camera
      * @param current_frame frame index
-     * @param stream if true also send frame to rtmp stream
      */
-    void EncodeYuv420p(uint8_t buffer[], size_t current_frame, bool stream);
+    void EncodeYuv420p(uint8_t buffer[], size_t current_frame);
 };
 
 #endif

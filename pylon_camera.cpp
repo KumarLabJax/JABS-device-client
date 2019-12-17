@@ -166,7 +166,7 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
 
         // send frame to the encoder
         video_writer.SetLiveStreaming(live_stream_);
-        video_writer.EncodeFrame(pImageBuffer, current_frame);
+        video_writer.EncodeFrame(pImageBuffer, current_frame, true);
 
         current_frame++;
         frames_captured++;
