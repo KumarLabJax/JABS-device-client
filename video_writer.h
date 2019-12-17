@@ -176,9 +176,10 @@ public:
      * this is called for each frame grabbed from the camera
      *
      * @param buffer buffer containing raw data
-     * @param current_frame
+     * @param current_frame current frame number
+     * @param stream if true also send frame to rtmp stream
      */
-    void EncodeFrame(uint8_t buffer[], size_t current_frame);
+    void EncodeFrame(uint8_t buffer[], size_t current_frame, bool stream);
 
     /**
      * @brief enable/disable live streaming
@@ -236,6 +237,25 @@ private:
     void InitFilters();
 
     /**
+     * @brief open rtmp stream and prepare for output
+     *
+     * Open and configure the rtmp stream if it is not already open.
+     * After calling, rtmp_stream_ will be ready to accept frames. If the
+     * stream can't be opened for some reason rtmp_stream_ and
+     * rtmp_format_context_ will be set to nullptr
+     */
+    void OpenRtmpStream();
+
+    /**
+     * @brief close rtmp stream
+     *
+     * Used to close the rtmp stream if it is no longer in use.
+     * This does not have to be called unless we want to stop streaming
+     * during an active recording session.
+     */
+    void CloseRtmpStream();
+
+    /**
      * @brief allocate an initialize a frame
      * @return std::unique_ptr managed AVFrame pointer
      */
@@ -244,15 +264,17 @@ private:
     /**
      * @brief encodes frame and write to file
      * @param frame AVFrame pointer containing frame data
+     * @param stream if true also send frame to rtmp stream
      */
-    void Encode(AVFrame *frame);
+    void Encode(AVFrame *frame, bool stream);
 
     /**
      * @brief encode a raw Yuv420p frame
      * @param buffer raw frame data from camera
      * @param current_frame frame index
+     * @param stream if true also send frame to rtmp stream
      */
-    void EncodeYuv420p(uint8_t buffer[], size_t current_frame);
+    void EncodeYuv420p(uint8_t buffer[], size_t current_frame, bool stream);
 };
 
 #endif

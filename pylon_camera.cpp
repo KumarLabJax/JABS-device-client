@@ -29,6 +29,7 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
     // rolling over to a new file
     int next_hour = 0;
 
+    //TODO move current_frame into VideoWriter
     size_t current_frame = 0;   // frame number in the current file
     size_t frames_captured = 0; // total number of frames captured in session
     uint64_t first_click = 0;   // timestamp of first frame captured

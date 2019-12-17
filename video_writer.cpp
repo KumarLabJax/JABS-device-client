@@ -316,10 +316,10 @@ av_pointer::frame VideoWriter::InitFrame() {
 }
 
 // encode a raw frame from the camera
-void VideoWriter::EncodeFrame(uint8_t buffer[], size_t current_frame)
+void VideoWriter::EncodeFrame(uint8_t buffer[], size_t current_frame,  bool stream)
 {
     if (selected_pixel_format_ == AV_PIX_FMT_YUV420P) {
-        EncodeYuv420p(buffer, current_frame);
+        EncodeYuv420p(buffer, current_frame, stream);
     } else {
         // unknown pixel format, we shouldn't get this far with an unknown pixel format
         // this will let us know we haven't implemented the encoder yet
@@ -328,7 +328,7 @@ void VideoWriter::EncodeFrame(uint8_t buffer[], size_t current_frame)
 }
 
 // encode a frame using Yuv420p pixel format
-void VideoWriter::EncodeYuv420p(uint8_t buffer[], size_t current_frame)
+void VideoWriter::EncodeYuv420p(uint8_t buffer[], size_t current_frame,  bool stream)
 {
     // create smart pointer to frame
     auto frame = InitFrame();
@@ -348,11 +348,11 @@ void VideoWriter::EncodeYuv420p(uint8_t buffer[], size_t current_frame)
     }
 
     // send frame to encoder
-    Encode(frame.get());
+    Encode(frame.get(), stream);
 }
 
 // send the frame to the encoder, filtering first if necessary
-void VideoWriter::Encode(AVFrame *frame)
+void VideoWriter::Encode(AVFrame *frame,  bool stream)
 {
     int rval;
     if (!apply_filter_) {
@@ -424,5 +424,6 @@ void VideoWriter::Encode(AVFrame *frame)
             // write filtered packet to file
             av_interleaved_write_frame(format_context_.get(), pkt_filtered.get());
         }
+
     }
 }
