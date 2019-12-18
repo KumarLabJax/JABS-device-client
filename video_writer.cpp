@@ -269,24 +269,37 @@ void VideoWriter::InitFilters()
 
 void VideoWriter::OpenRtmpStream()
 {
-    // setup the rtmp_stream
+    // setup the rtmp_stream.
+    // if we encounter any errors, we will return and continue with the recording
+    // session without streaming
+    // TODO -- eventually we may want to relay the streaming error to the server in order to inform the client
+
+    // allocate output format context
     AVFormatContext *tmp_f_context;
     avformat_alloc_output_context2(&tmp_f_context, NULL, "flv", rtmp_uri_.c_str());
+    if (!tmp_f_context) {
+        std::cerr << "unable to allocate rtmp output format context\n";
+        return;
+    }
     rtmp_format_context_ = av_pointer::format_context(tmp_f_context);
+
+    // add stream to output context
     rtmp_stream_ = avformat_new_stream(rtmp_format_context_.get(), ffcodec_);
     avcodec_parameters_from_context(rtmp_stream_->codecpar, codec_context_.get());
 
     // open rtmp stream
-    //TODO: open this on demand
     if (!(rtmp_format_context_->flags & AVFMT_NOFILE)) {
         int r = avio_open(&rtmp_format_context_->pb, rtmp_uri_.c_str(), AVIO_FLAG_WRITE);
         if (r < 0) {
-            throw std::runtime_error("unable to open " + rtmp_uri_ + " : " + av_err2str(r));
+            std::cerr << "unable to open rtmp stream\n";
+            rtmp_format_context_.reset();
         }
     }
 
+    // write header to stream
     if (avformat_write_header(rtmp_format_context_.get(), NULL) < 0) {
-        throw std::runtime_error("unable to write header to rtmp stream");
+        std::cerr << "unable to write header to rtmp stream\n";
+        rtmp_format_context_.reset();
     }
 }
 
@@ -329,6 +342,10 @@ void VideoWriter::EncodeFrame(uint8_t buffer[], size_t current_frame,  bool stre
         // unknown pixel format, we shouldn't get this far with an unknown pixel format
         // this will let us know we haven't implemented the encoder yet
         throw std::logic_error("encoder not implemented for pixel format");
+    }
+
+    if (stream && !rtmp_format_context_) {
+        OpenRtmpStream();
     }
 }
 
@@ -402,22 +419,25 @@ void VideoWriter::Encode(AVFrame *frame)
             throw std::runtime_error("error during encoding");
         }
 
-        // clone packet so we can send to the live stream
-        av_pointer::packet stream_pkt(av_packet_clone(pkt.get()));
+        // if the rtmp stream is setup
+        if (rtmp_format_context_) {
+            // clone packet so we can send to the live stream
+            av_pointer::packet stream_pkt(av_packet_clone(pkt.get()));
 
-        // rescale output packet timestamp values from codec to stream timebase
-        av_packet_rescale_ts(stream_pkt.get(), codec_context_->time_base, rtmp_stream_->time_base);
-        rval = av_interleaved_write_frame(rtmp_format_context_.get(), stream_pkt.get());
-        if (rval < 0 ) {
-            std::clog << "error writing frame to rtmp stream: " << av_err2str(rval) << std::endl;
+            // rescale output packet timestamp values from codec to stream timebase
+            av_packet_rescale_ts(stream_pkt.get(), codec_context_->time_base, rtmp_stream_->time_base);
+            rval = av_interleaved_write_frame(rtmp_format_context_.get(), stream_pkt.get());
+            if (rval < 0 ) {
+                std::clog << "error writing frame to rtmp stream: " << av_err2str(rval) << std::endl;
 
-            if (rval == AVERROR(EPIPE)) {
-                // broken pipe --  we lost the connection to the streaming server
-                // try to reconnect
-            } else if (rval == AVERROR(ECONNRESET)) {
-                // streaming server hung up on us
+                if (rval == AVERROR(EPIPE)) {
+                    // broken pipe --  we lost the connection to the streaming server
+                    // try to reconnect
+                } else if (rval == AVERROR(ECONNRESET)) {
+                    // streaming server hung up on us
+                }
             }
-        }   
+        }
 
         av_pointer::packet pkt_filtered(av_packet_alloc());
 
