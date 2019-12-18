@@ -343,6 +343,9 @@ void VideoWriter::EncodeFrame(uint8_t buffer[], size_t current_frame,  bool stre
 
     if (stream && !rtmp_format_context_) {
         OpenRtmpStream();
+    } else if (!stream && rtmp_format_context_) {
+        // close rtmp stream
+        rtmp_format_context_.reset();
     }
 }
 
