@@ -17,6 +17,7 @@
  */
 ServerCommand* send_status_update(SysInfo system_info,
     CameraController& camera_controller,
-    const std::string api_url);
+    const std::string api_url,
+    const std::string location);
 
 #endif

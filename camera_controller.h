@@ -140,6 +140,8 @@ public:
         unsigned int crf_ = 11;
 
         bool apply_filter_ = false;
+
+        std::string nv_room_string_;
     };
 
     /**
@@ -149,7 +151,7 @@ public:
      * @param frame_height
      * @param frame_width
      */
-    CameraController(const std::string &directory, int frame_height, int frame_width);
+    CameraController(const std::string &directory, int frame_height, int frame_width, const std::string& nv_room_string);
 
     /**
      * @brief destructor for CameraController, if the destructor is called
@@ -258,6 +260,9 @@ public:
      */
     void SetDirectory(std::string dir);
 
+    /// set nv room string
+    void SetNvRoomString(std::string s) {nv_room_string_ = s;}
+
 protected:
     std::string directory_;     ///< directory for storing video
     std::atomic_bool stop_recording_ {false}; ///< used to signal to the recording thread to terminate early
@@ -272,6 +277,7 @@ protected:
     std::mutex mutex_;    ///< mutex for protecting some variables shared by controlling thread and recording thread
     int frame_width_;  ///< frame width, loaded from config file
     int frame_height_; ///< frame height, loaded from config file
+    std::string nv_room_string_; ///< string generated from hostname and location, for use in output subdir
 
     /**
      * @brief generates a timestamp string for use in filenames.
@@ -305,7 +311,7 @@ protected:
      * @param time sytem time to use to generate a date string
      * @return path
      */
-    std::string MakeFilePath(std::chrono::time_point<std::chrono::system_clock> time);
+    std::string MakeOutputDir(std::chrono::time_point<std::chrono::system_clock> time);
 
     /**
      * @brief get hour using a given system clock time

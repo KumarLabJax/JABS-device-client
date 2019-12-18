@@ -31,9 +31,20 @@
 #include "pylon_camera.h"
 #include "server_command.h"
 
+struct AppConfig
+{
+    std::string output_dir;  ///< path to video capture directory
+    std::string api_uri;     ///< URI for webservice API
+    std::string location;    ///< device location string
+    int frame_width;         ///< frame width
+    int frame_height;        ///< frame height
+    std::chrono::seconds sleep_time; ///< time to wait between status update calls to API, in seconds
+};
+
 // default update interval (in seconds) if it isn't specified in the config file
 const unsigned int kDefaultSleep = 30;
 
+// default frame dimensions
 const int kDefaultFrameWidth = 800;
 const int kDefaultFrameHeight = 800;
 
@@ -53,32 +64,50 @@ void signalHandler( int signum ) {
 /* read a configuration file and set configuration variables
  *
  * @param config_path string containing the path to the configuration file
- * @param sleep_time modified to contain the "update_interval" param from the config file
- * @param video_dir modified to contain the path to the directory to store video files in
- * @param api_uri modified to contain the uri of the REST API
  *
- * @return zero on success, the value of INIReader ParseError() otherwise
+ * @return AppConfig struct containing config parameters read from file
  */
-int setConfig(std::string config_path,
-              std::chrono::seconds &sleep_time,
-              std::string &video_dir, 
-              std::string &api_uri,
-              int &frame_width,
-              int &frame_height)
+AppConfig readConfig(std::string config_path)
 {
+    AppConfig config;
     INIReader ini_reader(config_path);
     
     if (ini_reader.ParseError() != 0) {
-        return ini_reader.ParseError();
+        throw std::runtime_error("Unable to parse config file");
     }
     
-    sleep_time = std::chrono::seconds(ini_reader.GetInteger("app", "update_interval", kDefaultSleep));
-    video_dir = ini_reader.Get("disk", "video_capture_dir", "/tmp");
-    api_uri = ini_reader.Get("app", "api", "");
-    frame_width = ini_reader.GetInteger("video", "frame_width", kDefaultFrameWidth);
-    frame_height = ini_reader.GetInteger("video", "frame_height", kDefaultFrameHeight);
+    config.sleep_time = std::chrono::seconds(ini_reader.GetInteger("app", "update_interval", kDefaultSleep));
+    config.output_dir = ini_reader.Get("disk", "video_capture_dir", "/tmp");
+    config.api_uri = ini_reader.Get("app", "api", "");
 
-    return 0;
+    // TODO: consider making these required config parameters and remove defaults
+    config.frame_width = ini_reader.GetInteger("video", "frame_width", kDefaultFrameWidth);
+    config.frame_height = ini_reader.GetInteger("video", "frame_height", kDefaultFrameHeight);
+
+    config.location = ini_reader.Get("app", "location", "");
+
+    return config;
+}
+
+std::string getNvBoardString(std::string hostname, std::string location)
+{
+    static const std::string not_allowed_chars = "().?'\"[]{}<>;*&^$#@!`~|\t\n%";
+    std::string board_string;
+
+    size_t last_index = hostname.find_last_not_of("0123456789");
+    int nv_num = 0;
+    if (last_index < hostname.length()) {
+        nv_num = std::stoi(hostname.substr(last_index + 1));
+    }
+
+    board_string = "NV" + std::to_string(nv_num) + "-" + location;
+
+    for (unsigned int i = 0; i < not_allowed_chars.length(); ++i)
+    {
+        board_string.erase(std::remove(board_string.begin(), board_string.end(), not_allowed_chars.at(i)), board_string.end());
+    }
+
+    return board_string;
 }
 
 /**
@@ -93,16 +122,13 @@ int setConfig(std::string config_path,
 int main(int argc, char **argv)
 {
    
-    std::string config_path;         ///< path to configuration file, will be passed as a program argument
-    std::string video_capture_dir;   ///< path to video capture directory, will be set from a config file
-    std::string api_uri;             ///< URI for webservice API
-    std::chrono::seconds sleep_time; ///< time to wait between status update calls to API, in seconds
-    int frame_width;                 ///< frame width from config file
-    int frame_height;                ///< frame height from config file
+    AppConfig appConfig;     ///< app configuration, loaded from config file
+    std::string config_path; ///< path to configuration file, will be passed as a program argument
 
-    SysInfo system_info;             ///< information about the host system (memory, disk, load)
-    int rval;                        ///< used to check return value of some functions
-    bool short_sleep;                ///< indicates that we don't want to sleep full amount before next iteration
+    SysInfo system_info;     ///< information about the host system (memory, disk, load)
+    bool short_sleep;        ///< indicates that we don't want to sleep full amount before next iteration
+
+    std::string nv_room_string;
 
     
     // setup a signal handler to catch HUP signals which indicate that the
@@ -135,29 +161,29 @@ int main(int argc, char **argv)
     }
 
 
-    rval = setConfig(config_path, sleep_time, video_capture_dir, api_uri, frame_width, frame_height);
-    if (rval > 0) {
-        std::clog << SD_ERR << "Error parsing config file" << std::endl;
-        return 1;
-    } else if (rval == -1) {
-        std::clog << SD_ERR << "Unable to open config file: "
-                  << std::strerror(errno)<< std::endl;
+    try {
+        appConfig = readConfig(config_path);
+    } catch (const std::runtime_error& error) {
+        std::clog << SD_ERR << "Unable to read config file\n";
+        if (errno > 0) {
+            std::clog <<  std::strerror(errno) << std::endl;
+        }
         return 1;
     }
 
     
-    if (api_uri.empty()) {
+    if (appConfig.api_uri.empty()) {
         std::clog << SD_ERR << "'api' is a required config file parameter\n";
         return 1;
     }
 
-    if (frame_height <= 0 || frame_width<= 0) {
+    if (appConfig.frame_height <= 0 || appConfig.frame_width<= 0) {
         std::clog << SD_ERR << "invalid frame dimensions\n";
         return 1;
     }
     
     try {
-         system_info.AddMount(video_capture_dir);
+         system_info.AddMount(appConfig.output_dir);
     }
     catch (DiskRegistrationException &e) {
         std::clog << SD_ERR << e.what() << std::endl;
@@ -165,7 +191,9 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    PylonCameraController camera_controller(video_capture_dir, frame_width, frame_height);
+    nv_room_string = getNvBoardString(system_info.hostname(), appConfig.location);
+
+    PylonCameraController camera_controller(appConfig.output_dir, appConfig.frame_width, appConfig.frame_height, nv_room_string);
     
     // notify systemd that we're done initializing
     sd_notify(0, "READY=1");
@@ -178,26 +206,28 @@ int main(int argc, char **argv)
         // reload the configuration file
         if (hup_received && !camera_controller.recording()) {
             system_info.ClearMounts();
-            rval = setConfig(config_path, sleep_time, video_capture_dir, api_uri, frame_width, frame_height);
-            if (rval > 0) {
-                std::clog << SD_ERR << "Error parsing config file during reload" << std::endl;
-                return 1;
-            } else if (rval == -1) {
-                std::clog << SD_ERR << "Unable to open config file during reload: "
-                          << std::strerror(errno)<< std::endl;
+            try {
+                appConfig = readConfig(config_path);
+                nv_room_string = getNvBoardString(system_info.hostname(), appConfig.location);
+            } catch (const std::runtime_error& error) {
+                std::clog << SD_ERR << "Unable to read config file during reload\n";
+                if (errno > 0) {
+                    std::clog <<  std::strerror(errno) << std::endl;
+                }
                 return 1;
             }
-            
+
             try {
-                system_info.AddMount(video_capture_dir);
+                system_info.AddMount(appConfig.output_dir);
             }
             catch (DiskRegistrationException &e) {
                 std::clog << SD_ERR << e.what() << std::endl;
                 return 1;
             }
-            camera_controller.SetDirectory(video_capture_dir);
-            camera_controller.SetFrameHeight(frame_height);
-            camera_controller.SetFrameWidth(frame_width);
+            camera_controller.SetDirectory(appConfig.output_dir);
+            camera_controller.SetFrameHeight(appConfig.frame_height);
+            camera_controller.SetFrameWidth(appConfig.frame_width);
+            camera_controller.SetNvRoomString(nv_room_string);
 
             hup_received = false;
         }
@@ -206,7 +236,7 @@ int main(int argc, char **argv)
         system_info.Sample(); 
         
         // send updated status to the server
-        ServerCommand* svr_command = send_status_update(system_info, camera_controller, api_uri);
+        ServerCommand* svr_command = send_status_update(system_info, camera_controller, appConfig.api_uri, appConfig.location);
 
         switch (svr_command->command()) {
             case CommandTypes::NOOP:
@@ -259,7 +289,7 @@ int main(int argc, char **argv)
         if (short_sleep) {
             std::this_thread::sleep_for(std::chrono::seconds(1));
         } else {
-            std::this_thread::sleep_for(std::chrono::seconds(sleep_time));
+            std::this_thread::sleep_for(std::chrono::seconds(appConfig.sleep_time));
         }
 
     }

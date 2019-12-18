@@ -22,7 +22,11 @@ using namespace concurrency::streams;
 const std::string kStatusUpdateEndpoint = "/device/heartbeat";
 
 
-ServerCommand* send_status_update(SysInfo system_info, CameraController& camera_controller, const std::string api_uri)
+ServerCommand* send_status_update(
+    SysInfo system_info,
+    CameraController& camera_controller,
+    const std::string api_uri,
+    const std::string location)
 {
     static web::http::client::http_client client(api_uri);
     
@@ -33,6 +37,10 @@ ServerCommand* send_status_update(SysInfo system_info, CameraController& camera_
     std::clog << SD_INFO << "Sending status update @ " << timestamp << std::endl;
     
     payload["name"] = web::json::value(system_info.hostname());
+    if (location.length() > 0) {
+        payload["location"] = web::json::value(location);
+    }
+
     payload["timestamp"] = web::json::value::string(timestamp);
 
     if (camera_controller.session_id() != -1) {
