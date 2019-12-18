@@ -241,7 +241,6 @@ public:
      */
     int recording_error() const;
 
-
     /**
      * clear information from previous recording session
      */
@@ -342,7 +341,6 @@ protected:
      * @return integer hour
      */
     int GetCurrentHour();
-
 
 private:
     /**

@@ -101,6 +101,9 @@ bool CameraController::StartRecording(const RecordingSessionConfig& config)
         recording_thread_.join();
     }
 
+    // initialize live stream status to off
+    live_stream_ = false;
+
     // start recording thread
     recording_ = true;
     recording_thread_ = std::thread(&CameraController::RecordVideo, this, config);
