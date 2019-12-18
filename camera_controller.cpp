@@ -211,8 +211,9 @@ void CameraController::SetStreaming(bool stream)
     // only allow turning on streaming if a rtmp uri was configured
     if (stream && !rtmp_uri_.empty()) {
         live_stream_ = true;
+    } else {
+        live_stream_ = false;
     }
-    live_stream_ = false;
 }
 
 // setters for the RecordingSessionConfig class
