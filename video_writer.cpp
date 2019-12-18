@@ -157,9 +157,6 @@ VideoWriter::VideoWriter(
         throw std::runtime_error("unable to write header");
     }
 
-    //TODO don't call this in constructor -- only open on demand
-    OpenRtmpStream();
-
     // initialize filter
     if (apply_filter_) {
         InitFilters();
