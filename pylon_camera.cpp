@@ -165,7 +165,7 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
         timestamp_file << (frame_timestamp - first_click) / 125000000.0 << std::endl;
 
         // send frame to the encoder
-        video_writer.EncodeFrame(pImageBuffer, current_frame, true);
+        video_writer.EncodeFrame(pImageBuffer, current_frame, live_stream_);
 
         current_frame++;
         frames_captured++;
