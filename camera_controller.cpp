@@ -203,8 +203,17 @@ void CameraController::SetDirectory(std::string dir)
     directory_ = dir;
 }
 
+void CameraController::SetStreaming(bool stream)
+{
+    // only allow turning on streaming if a rtmp uri was configured
+    if (stream && !rtmp_uri_.empty()) {
+        live_stream_ = true;
+    }
+    live_stream_ = false;
+}
+
 // setters for the RecordingSessionConfig class
-// -- we shoudl add as many validation checks as we can.
+// -- we should add as many validation checks as we can.
 
 void CameraController::RecordingSessionConfig::set_target_fps(unsigned int target_fps)
 {

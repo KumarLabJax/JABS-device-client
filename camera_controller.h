@@ -275,25 +275,25 @@ public:
     /// set rtmp URI
     void SetRtmpUri(std::string s) {rtmp_uri_ = s;}
 
-    /// enable/disable live streaming
-    void SetStreaming(bool stream) {live_stream_ = stream;}
+    /// enable/disable live streaming. will not set to true if rtmp_uri_ is empty
+    void SetStreaming(bool stream);
 
 protected:
     std::string directory_;     ///< directory for storing video
     std::atomic_bool stop_recording_ {false}; ///< used to signal to the recording thread to terminate early
     std::atomic_bool recording_ {false};      ///< are we recording video?
     std::thread recording_thread_;            ///< current recording thread
-    std::chrono::seconds elapsed_time_;   ///< duration of completed recording session
+    std::chrono::seconds elapsed_time_;       ///< duration of completed recording session
     std::atomic<std::chrono::high_resolution_clock::duration> session_start_;
     std::vector<double> moving_avg_;  ///<  buffer storing fps for last N frames captured where N is the target framerate
     int session_id_ {-1}; ///< stores session ID if current recording session (if there is one)
     std::string err_msg_; ///< error message if recording_err_
     int err_state_;       ///< error state of last completed recording session
     std::mutex mutex_;    ///< mutex for protecting some variables shared by controlling thread and recording thread
-    int frame_width_;  ///< frame width, loaded from config file
-    int frame_height_; ///< frame height, loaded from config file
+    int frame_width_;     ///< frame width, loaded from config file
+    int frame_height_;    ///< frame height, loaded from config file
     std::string nv_room_string_; ///< string generated from hostname and location, for use in output subdir
-    std::string rtmp_uri_; ///< URL for rtmp streaming endpoint
+    std::string rtmp_uri_;       ///< URL for rtmp streaming endpoint
     std::atomic_bool live_stream_ {false}; ///< if true, stream video to rtmp endpoint
 
     /**
