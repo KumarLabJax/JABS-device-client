@@ -18,12 +18,14 @@ VideoWriter & VideoWriter::operator=(VideoWriter &&o)
 {
     if (this != &o)
     {
+        // close rtmp output if it was open, it will get reopened on demand
+        rtmp_format_context_.reset();
+
         rtmp_uri_ = o.rtmp_uri_;
         ffcodec_ = o.ffcodec_;
         apply_filter_ = o.apply_filter_;
         selected_pixel_format_ = o.selected_pixel_format_;
         stream_ = o.stream_;
-        rtmp_stream_ = o.rtmp_stream_;
         buffersink_ctx_ = std::move(o.buffersink_ctx_);
         buffersrc_ctx_ = std::move(o.buffersrc_ctx_);
         codec_context_ = std::move(o.codec_context_);
@@ -39,12 +41,10 @@ VideoWriter::VideoWriter(VideoWriter &&o) : rtmp_uri_(o.rtmp_uri_), ffcodec_(o.f
                                             apply_filter_(o.apply_filter_),
                                             selected_pixel_format_(o.selected_pixel_format_),
                                             stream_(o.stream_),
-                                            rtmp_stream_(o.rtmp_stream_),
                                             buffersink_ctx_(std::move(o.buffersink_ctx_)),
                                             buffersrc_ctx_(std::move(o.buffersrc_ctx_)),
                                             codec_context_(std::move(o.codec_context_)),
                                             format_context_(std::move(o.format_context_)),
-                                            rtmp_format_context_(std::move(o.rtmp_format_context_)),
                                             filter_graph_(std::move(o.filter_graph_)),
                                             bsfc_(std::move(o.bsfc_)) {}
 
