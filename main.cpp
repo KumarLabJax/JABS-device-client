@@ -219,7 +219,8 @@ int main(int argc, char **argv)
         appConfig.frame_width,
         appConfig.frame_height,
         nv_room_string,
-        addStreamName(appConfig.rtmp_uri, system_info.hostname()));
+        addStreamName(appConfig.rtmp_uri, system_info.hostname())
+    );
     
     // notify systemd that we're done initializing
     sd_notify(0, "READY=1");
