@@ -34,11 +34,11 @@ private:
         void OnOpened(Pylon::CInstantCamera &camera);
 
     private:
-        int frame_width_;                      ///< frame width in pixels
-        int frame_height_;                     ///< frame height in pixels
-        int target_fps_;                       ///< target frames per second
+        int frame_width_;           ///< frame width in pixels
+        int frame_height_;          ///< frame height in pixels
+        int target_fps_;            ///< target frames per second
         std::string pixel_format_;  ///< pixel format
-        bool enable_pgi_;                      ///< enable pgi flag
+        bool enable_pgi_;           ///< enable pgi flag
     };
 
     // private methods
