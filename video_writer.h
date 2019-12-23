@@ -113,7 +113,6 @@ struct AVPacketDeleter {
 struct AVBSFContextDeleter {
     void operator()(AVBSFContext* c) {
         if (c) {
-            // we are allocating packets with av_packet_alloc, so we need to free them
             av_bsf_free(&c);
         }
     }
