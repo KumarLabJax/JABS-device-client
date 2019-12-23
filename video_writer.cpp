@@ -152,7 +152,7 @@ VideoWriter::VideoWriter(
     avcodec_parameters_copy(bsfc_->par_in, stream_->codecpar);
     bsfc_->time_base_in = stream_->time_base;
     // initialize teh bsf, abort if not
-    f = av_bsf_init(bfsc_.get());
+    r = av_bsf_init(bsfc_.get());
     if (r < 0) {
         throw std::runtime_error("unable to initialize bitstream filter " + av_err2str(r));
     }
