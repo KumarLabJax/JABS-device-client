@@ -18,9 +18,11 @@ VideoWriter & VideoWriter::operator=(VideoWriter &&o)
 {
     if (this != &o)
     {
-        // close rtmp output if it was open, it will get reopened on demand
+        // close rtmp output if it was open
+        // don't try to copy it -- it will get reopened on demand
         rtmp_format_context_.reset();
 
+        // the rest of the members can be copied or moved
         rtmp_uri_ = o.rtmp_uri_;
         ffcodec_ = o.ffcodec_;
         apply_filter_ = o.apply_filter_;
@@ -70,7 +72,6 @@ VideoWriter::VideoWriter(
 
     rtmp_uri_ = rtmp_uri;
 
-
     // lookup specified codec
     ffcodec_ = avcodec_find_encoder_by_name(config.codec().c_str());
     if (!ffcodec_) {
@@ -117,13 +118,13 @@ VideoWriter::VideoWriter(
     codec_context_->pix_fmt = selected_pixel_format_;
 
     // This flag is required for streaming with rtmp so we have to set it for
-    // the codec. the avi format context does not really want this set, so
-    // we will use a bitstream filter on the AVI output to correct for this
+    // the codec. The avi format context does not want this set, so we will use
+    // a bitstream filter on the AVI output to correct for this
     codec_context_->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
     // setup above mentioned bitstream filter
-    // see documentation here we are more or less doing what the example shows
-    // with the ffmpeg command line: https://ffmpeg.org/ffmpeg-bitstream-filters.html#dump_005fextra
+    // we are more or less doing what the example shows with the ffmpeg
+    // command line: https://ffmpeg.org/ffmpeg-bitstream-filters.html#dump_005fextra
     AVBSFContext *tmp;
     r = av_bsf_alloc(av_bsf_get_by_name("dump_extra"), &tmp);
     if (r < 0) {
@@ -145,7 +146,16 @@ VideoWriter::VideoWriter(
     avcodec_parameters_from_context(stream_->codecpar, codec_context_.get());
     stream_->time_base = codec_context_->time_base;
     stream_->r_frame_rate = codec_context_->framerate;
-    avcodec_parameters_copy(bsfc_->par_in, bsfc_->par_in);
+
+    // finish setting up the bitstream filter
+    // first copy the codec parameters and time base
+    avcodec_parameters_copy(bsfc_->par_in, stream_->codecpar);
+    bsfc_->time_base_in = stream_->time_base;
+    // initialize teh bsf, abort if not
+    f = av_bsf_init(bfsc_.get());
+    if (r < 0) {
+        throw std::runtime_error("unable to initialize bitstream filter " + av_err2str(r));
+    }
 
     // open the output file
     r = avio_open(&format_context_->pb, full_filename.c_str(), AVIO_FLAG_WRITE);
@@ -264,13 +274,15 @@ void VideoWriter::InitFilters()
     }
 }
 
+/*
+ * setup the rtmp_stream.
+ * if we encounter any errors, we will return and continue with the recording
+ * session without streaming
+ * TODO -- eventually we may want to relay the streaming error to the server in order to inform the client
+ * TODO -- if we fail to open the rtmp stream, set a timer so we don't try again for a certain amount of time
+ */
 void VideoWriter::OpenRtmpStream()
 {
-    // setup the rtmp_stream.
-    // if we encounter any errors, we will return and continue with the recording
-    // session without streaming
-    // TODO -- eventually we may want to relay the streaming error to the server in order to inform the client
-
     // allocate output format context
     AVFormatContext *tmp_f_context;
     avformat_alloc_output_context2(&tmp_f_context, NULL, "flv", rtmp_uri_.c_str());
@@ -278,6 +290,8 @@ void VideoWriter::OpenRtmpStream()
         std::cerr << "unable to allocate rtmp output format context\n";
         return;
     }
+
+    // transfer management of the allocated format context to a smart pointer
     rtmp_format_context_ = av_pointer::format_context(tmp_f_context);
 
     // add stream to output context
@@ -430,25 +444,29 @@ void VideoWriter::Encode(AVFrame *frame)
             if (rval < 0 ) {
                 std::clog << "error writing frame to rtmp stream: " << av_err2str(rval) << std::endl;
 
-                if (rval == AVERROR(EPIPE)) {
-                    // broken pipe --  we lost the connection to the streaming server
-                    // try to reconnect
-                } else if (rval == AVERROR(ECONNRESET)) {
-                    // streaming server hung up on us
+                /* if the streaming server closes the connection unexpectedly (ECONNRESET)
+                   or we lose the connection (EPIPE), then reset rtmp_format_context_
+                   to force a reconnect when we handle the next frame.
+                   this frame won't get streamed
+
+                   TODO: limit reconnect attempts for ECONNRESET since that may indicate a configuration issue
+                 */
+                if (rval == AVERROR(EPIPE) || rval == AVERROR(ECONNRESET)) {
+                    rtmp_format_context_.reset();
                 }
             }
         }
 
-        av_pointer::packet pkt_filtered(av_packet_alloc());
-
         // use "dump_extra" bitstream filter to add header back to keyframes
         // this is used because we have to ste global headers to allow for streaming
+        av_pointer::packet pkt_filtered(av_packet_alloc());
         av_bsf_send_packet(bsfc_.get(), pkt.get());
 
+        // grab all available packets from the bitstream filter (a bsf can collect
+        // multiple packets before they are ready to be received)
         while ((rval = av_bsf_receive_packet(bsfc_.get(), pkt_filtered.get())) == 0) {
             // write filtered packet to file
             av_interleaved_write_frame(format_context_.get(), pkt_filtered.get());
         }
-
     }
 }
