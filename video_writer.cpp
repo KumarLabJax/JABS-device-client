@@ -154,13 +154,13 @@ VideoWriter::VideoWriter(
     // initialize teh bsf, abort if not
     r = av_bsf_init(bsfc_.get());
     if (r < 0) {
-        throw std::runtime_error("unable to initialize bitstream filter " + av_err2str(r));
+        throw std::runtime_error("unable to initialize bitstream filter " + std::string(av_err2str(r)));
     }
 
     // open the output file
     r = avio_open(&format_context_->pb, full_filename.c_str(), AVIO_FLAG_WRITE);
     if (r < 0) {
-        throw std::runtime_error("unable to open " + full_filename + " : " + av_err2str(r));
+        throw std::runtime_error("unable to open " + full_filename + " : " + std::string(av_err2str(r)));
     }
 
     if (avformat_write_header(format_context_.get(), NULL) < 0) {
