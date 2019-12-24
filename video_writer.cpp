@@ -302,8 +302,9 @@ void VideoWriter::OpenRtmpStream()
     if (!(rtmp_format_context_->flags & AVFMT_NOFILE)) {
         int r = avio_open(&rtmp_format_context_->pb, rtmp_uri_.c_str(), AVIO_FLAG_WRITE);
         if (r < 0) {
-            std::cerr << "unable to open rtmp stream\n";
+            std::cerr << "unable to open rtmp stream: " + std::string(av_err2str(r));
             rtmp_format_context_.reset();
+            return;
         }
     }
 
