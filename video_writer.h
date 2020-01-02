@@ -106,6 +106,18 @@ struct AVPacketDeleter {
     }
 };
 
+/**
+ * custom deleter so that we can have a std::unique_ptr manage an
+ * AVBSFContext pointer
+ */
+struct AVBSFContextDeleter {
+    void operator()(AVBSFContext* c) {
+        if (c) {
+            av_bsf_free(&c);
+        }
+    }
+};
+
 // namespace of various smart pointer types
 // this lets us use `av_pointer::frame foo;` vs `std::unique_ptr<AVFrame, AVFrameDeleter> foo;`
 namespace av_pointer {
@@ -115,11 +127,17 @@ using format_context = std::unique_ptr<AVFormatContext, AVFormatContextDeleter>;
 using in_out = std::unique_ptr<AVFilterInOut, AVFilterInOutDeleter>;
 using filter_graph = std::unique_ptr<AVFilterGraph, AVFilterGraphDeleter>;
 using packet = std::unique_ptr<AVPacket, AVPacketDeleter>;
+using bsf_context = std::unique_ptr<AVBSFContext, AVBSFContextDeleter>;
 }
 
 class VideoWriter {
 public:
-    VideoWriter(const std::string& filename, int frame_width, int frame_height, const CameraController::RecordingSessionConfig& config);
+    VideoWriter(
+        const std::string& filename,
+        const std::string& rtmp_uri,
+        int frame_width,
+        int frame_height,
+        const CameraController::RecordingSessionConfig& config);
 
     /**
      * @brief destructor -- will make sure buffers are flushed
@@ -157,11 +175,15 @@ public:
      * this is called for each frame grabbed from the camera
      *
      * @param buffer buffer containing raw data
-     * @param current_frame
+     * @param current_frame current frame number
+     * @param stream if true also send frame to rtmp stream
      */
-    void EncodeFrame(uint8_t buffer[], size_t current_frame);
+    void EncodeFrame(uint8_t buffer[], size_t current_frame, bool stream);
 
 private:
+
+    /// rtmp uri
+    std::string rtmp_uri_;
 
     /// pointer to specified codec
     const AVCodec *ffcodec_;
@@ -172,8 +194,11 @@ private:
     /// specified pixel format
     enum AVPixelFormat selected_pixel_format_;
 
-    /// av stream added to format_contex_. Will get freed up when format_context_ is deleted
+    /// file output stream. Will get freed up when format_context_ is deleted
     AVStream *stream_;
+
+    /// rtmp output stream. Will get freed up when rtmp_format_context_ is deleted
+    AVStream *rtmp_stream_;
 
     /// source for filter graph, will get freed when filter graph is deleted
     AVFilterContext *buffersink_ctx_;
@@ -187,8 +212,12 @@ private:
     av_pointer::codec_context codec_context_;
     /// smart pointer to AVFormatContext
     av_pointer::format_context format_context_;
+    /// smart pointer to AVFormatContext
+    av_pointer::format_context rtmp_format_context_;
     /// smart pointer to AVFilterGraph
     av_pointer::filter_graph filter_graph_;
+    /// smart pointer for AVBSFContext
+    av_pointer::bsf_context bsfc_;
 
     /**
      * @brief initialize filters
@@ -196,6 +225,25 @@ private:
      * called during constructor if apply_filter_ is set to true.
      */
     void InitFilters();
+
+    /**
+     * @brief open rtmp stream and prepare for output
+     *
+     * Open and configure the rtmp stream if it is not already open.
+     * After calling, rtmp_stream_ will be ready to accept frames. If the
+     * stream can't be opened for some reason rtmp_stream_ and
+     * rtmp_format_context_ will be set to nullptr
+     */
+    void OpenRtmpStream();
+
+    /**
+     * @brief close rtmp stream
+     *
+     * Used to close the rtmp stream if it is no longer in use.
+     * This does not have to be called unless we want to stop streaming
+     * during an active recording session.
+     */
+    void CloseRtmpStream();
 
     /**
      * @brief allocate an initialize a frame

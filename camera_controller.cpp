@@ -22,11 +22,15 @@ bool Validate(std::string name)
 }
 } //namespace codecs
 
-CameraController::CameraController(const std::string &directory, int frame_width, int frame_height, const std::string &nv_room_string) :
-    directory_(directory),
-    frame_width_(frame_width),
-    frame_height_(frame_height),
-    nv_room_string_(nv_room_string){}
+CameraController::CameraController(const std::string &directory,
+                                   int frame_width,
+                                   int frame_height,
+                                   const std::string &nv_room_string,
+                                   const std::string &rtmp_uri) : directory_(directory),
+                                                                  frame_width_(frame_width),
+                                                                  frame_height_(frame_height),
+                                                                  nv_room_string_(nv_room_string),
+                                                                  rtmp_uri_(rtmp_uri) {}
   
 CameraController::~CameraController() {
     
@@ -99,6 +103,9 @@ bool CameraController::StartRecording(const RecordingSessionConfig& config)
     if (recording_thread_.joinable()) {
         recording_thread_.join();
     }
+
+    // initialize live stream status to off
+    live_stream_ = false;
 
     // start recording thread
     recording_ = true;
@@ -202,8 +209,18 @@ void CameraController::SetDirectory(std::string dir)
     directory_ = dir;
 }
 
+void CameraController::SetStreaming(bool stream)
+{
+    // only allow turning on streaming if a rtmp uri was configured
+    if (stream && !rtmp_uri_.empty()) {
+        live_stream_ = true;
+    } else {
+        live_stream_ = false;
+    }
+}
+
 // setters for the RecordingSessionConfig class
-// -- we shoudl add as many validation checks as we can.
+// -- we should add as many validation checks as we can.
 
 void CameraController::RecordingSessionConfig::set_target_fps(unsigned int target_fps)
 {

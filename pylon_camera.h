@@ -16,8 +16,10 @@
  */
 class PylonCameraController : public CameraController {
 public:
-    PylonCameraController(const std::string &directory, int frame_width, int frame_height, const std::string &nv_room_string) :
-        CameraController(directory, frame_width, frame_height, nv_room_string) {}
+    PylonCameraController(
+        const std::string &directory, int frame_width, int frame_height,
+        const std::string &nv_room_string, const std::string &rtmp_uri
+    ) : CameraController(directory, frame_width, frame_height, nv_room_string, rtmp_uri) {}
 
 private:
 
@@ -32,11 +34,11 @@ private:
         void OnOpened(Pylon::CInstantCamera &camera);
 
     private:
-        int frame_width_;                      ///< frame width in pixels
-        int frame_height_;                     ///< frame height in pixels
-        int target_fps_;                       ///< target frames per second
+        int frame_width_;           ///< frame width in pixels
+        int frame_height_;          ///< frame height in pixels
+        int target_fps_;            ///< target frames per second
         std::string pixel_format_;  ///< pixel format
-        bool enable_pgi_;                      ///< enable pgi flag
+        bool enable_pgi_;           ///< enable pgi flag
     };
 
     // private methods

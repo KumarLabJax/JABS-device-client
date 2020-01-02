@@ -139,9 +139,12 @@ public:
         /// compression Constant Rate Factor (CRF) 0 = lossless, 51 = worst possible quality
         unsigned int crf_ = 11;
 
+        /// run frames through filtering before output
         bool apply_filter_ = false;
 
+        /// room string, used to generate outpput subdirectory
         std::string nv_room_string_;
+
     };
 
     /**
@@ -151,7 +154,7 @@ public:
      * @param frame_height
      * @param frame_width
      */
-    CameraController(const std::string &directory, int frame_height, int frame_width, const std::string& nv_room_string);
+    CameraController(const std::string &directory, int frame_height, int frame_width, const std::string& nv_room_string, const std::string& rtmp_uri);
 
     /**
      * @brief destructor for CameraController, if the destructor is called
@@ -166,7 +169,13 @@ public:
      *
      * @returns true if recording thread is active, false otherwise
      */
-    bool recording() const { return recording_; }
+    bool recording() const {return recording_;}
+
+    /**
+     * @brief get streaming status
+     * @return true if live streaming is enabled, false otherwise
+     */
+    bool live_streaming() const {return live_stream_;}
 
     /**
      * @brief get recording session ID
@@ -174,7 +183,7 @@ public:
      * @returns session ID of active recording session. return value is undefined
      * if there is no active recording session
      */
-    int session_id() const { return session_id_; }
+    int session_id() const {return session_id_;}
 
     /**
      * @brief start the recording thread
@@ -232,7 +241,6 @@ public:
      */
     int recording_error() const;
 
-
     /**
      * clear information from previous recording session
      */
@@ -263,21 +271,29 @@ public:
     /// set nv room string
     void SetNvRoomString(std::string s) {nv_room_string_ = s;}
 
+    /// set rtmp URI
+    void SetRtmpUri(std::string s) {rtmp_uri_ = s;}
+
+    /// enable/disable live streaming. will not set to true if rtmp_uri_ is empty
+    void SetStreaming(bool stream);
+
 protected:
     std::string directory_;     ///< directory for storing video
     std::atomic_bool stop_recording_ {false}; ///< used to signal to the recording thread to terminate early
     std::atomic_bool recording_ {false};      ///< are we recording video?
     std::thread recording_thread_;            ///< current recording thread
-    std::chrono::seconds elapsed_time_;   ///< duration of completed recording session
+    std::chrono::seconds elapsed_time_;       ///< duration of completed recording session
     std::atomic<std::chrono::high_resolution_clock::duration> session_start_;
     std::vector<double> moving_avg_;  ///<  buffer storing fps for last N frames captured where N is the target framerate
     int session_id_ {-1}; ///< stores session ID if current recording session (if there is one)
     std::string err_msg_; ///< error message if recording_err_
     int err_state_;       ///< error state of last completed recording session
     std::mutex mutex_;    ///< mutex for protecting some variables shared by controlling thread and recording thread
-    int frame_width_;  ///< frame width, loaded from config file
-    int frame_height_; ///< frame height, loaded from config file
+    int frame_width_;     ///< frame width, loaded from config file
+    int frame_height_;    ///< frame height, loaded from config file
     std::string nv_room_string_; ///< string generated from hostname and location, for use in output subdir
+    std::string rtmp_uri_;       ///< URL for rtmp streaming endpoint
+    std::atomic_bool live_stream_ {false}; ///< if true, stream video to rtmp endpoint
 
     /**
      * @brief generates a timestamp string for use in filenames.
@@ -325,7 +341,6 @@ protected:
      * @return integer hour
      */
     int GetCurrentHour();
-
 
 private:
     /**

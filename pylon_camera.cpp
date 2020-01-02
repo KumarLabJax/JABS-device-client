@@ -29,6 +29,7 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
     // rolling over to a new file
     int next_hour = 0;
 
+    //TODO move current_frame into VideoWriter
     size_t current_frame = 0;   // frame number in the current file
     size_t frames_captured = 0; // total number of frames captured in session
     uint64_t first_click = 0;   // timestamp of first frame captured
@@ -104,7 +105,7 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
         filename = output_dir + config.file_prefix();
     }
 
-    VideoWriter video_writer(filename, frame_width_, frame_height_, config);
+    VideoWriter video_writer(filename, rtmp_uri_, frame_width_, frame_height_, config);
 
     // camera is configured and we're ready to start capturing video
     // start grabbing frames
@@ -164,7 +165,7 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
         timestamp_file << (frame_timestamp - first_click) / 125000000.0 << std::endl;
 
         // send frame to the encoder
-        video_writer.EncodeFrame(pImageBuffer, current_frame);
+        video_writer.EncodeFrame(pImageBuffer, current_frame, live_stream_);
 
         current_frame++;
         frames_captured++;
@@ -175,7 +176,7 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
             filename = output_dir + config.file_prefix() + timestamp(start_time);
 
             // setup a VideoWriter to the new filename:
-            video_writer = VideoWriter(filename, frame_width_, frame_height_, config);
+            video_writer = VideoWriter(filename, rtmp_uri_, frame_width_, frame_height_, config);
 
             next_hour = (GetCurrentHour(start_time) + 1) % 24;
             current_frame = 0;
