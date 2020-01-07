@@ -110,6 +110,7 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
     // camera is configured and we're ready to start capturing video
     // start grabbing frames
     camera.StartGrabbing(GrabStrategy_OneByOne);
+    capturing_ = true;
 
     // main recording loop
     while(1) {
@@ -184,13 +185,13 @@ void PylonCameraController::RecordVideo(const RecordingSessionConfig &config)
 
         ptrGrabResult.Release();
     }
+    elapsed_time_ = chrono::duration_cast<chrono::seconds>(
+        chrono::system_clock::now().time_since_epoch() - session_start_.load());
 
     // out of acquisition loop, stop grabbing frames and shutdown the camera
     camera.StopGrabbing();
     camera.Close();
-
-    elapsed_time_ = chrono::duration_cast<chrono::seconds>(
-        chrono::system_clock::now().time_since_epoch() - session_start_.load());
+    capturing_ = false;
     recording_ = false;
 }
 
