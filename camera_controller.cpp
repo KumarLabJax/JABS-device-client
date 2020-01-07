@@ -128,7 +128,7 @@ void CameraController::StopRecording() {
 std::chrono::seconds CameraController::elapsed_time() const
 {
     if (recording_) {
-        // recording thread is still running
+        // recording thread is running
 
         if (!capturing_) {
             // if we haven't started grabbing frames yet, return 0
