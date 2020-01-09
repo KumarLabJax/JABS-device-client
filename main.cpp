@@ -310,6 +310,7 @@ int main(int argc, char **argv)
                 short_sleep = true;
                 break;
             case CommandTypes::STREAM:
+                std::clog << SD_DEBUG << "STREAM" << std::endl;
                 if (!camera_controller.live_streaming()) {
                     camera_controller.SetStreaming(true);
                 }
