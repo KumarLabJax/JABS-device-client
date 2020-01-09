@@ -142,6 +142,8 @@ ServerCommand* send_status_update(
                 case CommandTypes::COMPLETE:
                     command = new ServerCommand(CommandTypes::COMPLETE);
                     break;
+                case CommandTypes::STREAM:
+                    command = new ServerCommand(CommandTypes::STREAM);
                 case CommandTypes::UNKNOWN:
                     command = new ServerCommand(CommandTypes::UNKNOWN);
                     break;

@@ -270,6 +270,9 @@ int main(int argc, char **argv)
         switch (svr_command->command()) {
             case CommandTypes::NOOP:
                 std::clog << SD_DEBUG << "NOOP" << std::endl;
+                if (camera_controller.live_streaming()) {
+                    camera_controller.SetStreaming(false);
+                }
                 break;
             case CommandTypes::START_RECORDING:
             {
@@ -305,6 +308,11 @@ int main(int argc, char **argv)
                 std::clog << SD_DEBUG << "COMPLETE" << std::endl;
                 camera_controller.ClearSession();
                 short_sleep = true;
+                break;
+            case CommandTypes::STREAM:
+                if (!camera_controller.live_streaming()) {
+                    camera_controller.SetStreaming(true);
+                }
                 break;
             case CommandTypes::UNKNOWN:
                 std::clog << SD_ERR << "Server responded with unknown command" << std::endl;
