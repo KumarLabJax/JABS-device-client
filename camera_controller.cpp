@@ -128,7 +128,14 @@ void CameraController::StopRecording() {
 std::chrono::seconds CameraController::elapsed_time() const
 {
     if (recording_) {
-        // recording thread is still running, use session_start_ and current
+        // recording thread is running
+
+        if (!capturing_) {
+            // if we haven't started grabbing frames yet, return 0
+            return std::chrono::seconds::zero();
+        }
+
+        // otherwise use session_start_ and current
         // time to calculate a duration in seconds
         return std::chrono::duration_cast<std::chrono::seconds>(
             std::chrono::system_clock::now().time_since_epoch() - session_start_.load());
