@@ -12,6 +12,7 @@ enum CommandTypes {
     START_RECORDING,
     STOP_RECORDING,
     COMPLETE,
+    STREAM,
     UNKNOWN
 };
 }

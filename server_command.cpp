@@ -8,6 +8,7 @@ using namespace CommandTypes;
 #define START_CMD "START"
 #define STOP_CMD  "STOP"
 #define COMPLETE_CMD "COMPLETE"
+#define STREAM_CMD "STREAM"
 
 CommandTypes::CommandTypes getCommand(json::value payload)
 {
@@ -17,6 +18,8 @@ CommandTypes::CommandTypes getCommand(json::value payload)
         return CommandTypes::STOP_RECORDING;
     } else if (payload["command_name"].as_string() == COMPLETE_CMD) {
         return CommandTypes::COMPLETE;
+    } else if (payload["command_name"].as_string() == STREAM_CMD) {
+        return CommandTypes::STREAM;
     }
     return CommandTypes::UNKNOWN;
 }
