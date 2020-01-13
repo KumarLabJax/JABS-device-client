@@ -1,18 +1,18 @@
-# Long Term Monitoring System Readme
+# JAX Mouse Behavior Analysis
 
 ## Overview
 
 This program implements a service that is run continuously on the video 
 acquisition computers. It monitors the system, periodically gathering info on 
 disk space consumption, system load, memory utilization, etc and then sends 
-that information to the LTMS webservice. It will also perform video acquisition 
-on request from the webservice.
+that information to the JAX MBA webservice. It will also perform video
+acquisition on request from the webservice.
 
 ## Installation
 
 ### Platform
 
-This software *only* supports Linux.
+This software **only** supports Linux.
 
 Windows and Unix (including but not limited to BSD and Darwin (OS X)) are not 
 currently supported. 
@@ -22,22 +22,32 @@ currently supported.
 A C++11 compliant compiler is required. Any recent version of gcc or clang
 should be sufficient.
 
-Before you can compile this program, you must initialize git submodules. This pulls in 
-a 3rd party library that we depend on. After cloning this repository, running
-`git submodule update --init` will add submodules to your git config and clone them. 
+Before you can compile this program, you must initialize git submodules. This
+pulls in a 3rd party library that we depend on. After cloning this
+repository, running `git submodule update --init` will add submodules to your
+git config and clone them. 
 
-This software uses the Microsoft C++ REST SDK: https://github.com/microsoft/cpprestsdk
+This software uses the Microsoft C++ REST SDK:
+https://github.com/microsoft/cpprestsdk
 
 For Ubuntu systems, `sudo apt install libcpprest-dev` is sufficient for 
 installation of the Microsoft C++ REST SDK and its dependencies (such as Boost).
 
 The Basler pylon SDK, which we use to control our camera, is also required. It 
-can be obtained from the Basler website: https://www.baslerweb.com/en/products/software/
+can be obtained from the Basler website:
+https://www.baslerweb.com/en/products/software/. Our Makefile assumes Pylon is 
+installed into /opt/pylon5. If this is not the case for you, you will need to 
+modify the `PYLONDIR` variable in the Makefile. 
 
 You will also need several ffmpeg libraries, and their development header files. 
 On Ubuntu, `sudo apt install libavcodec-dev libavformat-dev libavfilter-dev 
 libavdevice-dev libavformat-dev libavutil-dev` will install these and their 
 dependencies, however we recommend installing ffmpeg from source. 
+
+Once the dependencies are installed, running  the `make` command in this
+directory will compile the JAX-MBA client. Running `sudo make install` will 
+install the binary in `/opt/jax-mba/bin` and a config file template in 
+`/opt/jax-mba/conf/jax-mba.ini`.
 
 ### Configuring as a daemon
 

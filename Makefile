@@ -1,6 +1,6 @@
 PYLON_DIR = /opt/pylon5
 FFMPEG_DIR = /opt/ffmpeg-n4.0
-INSTALL_DIR = /usr/local/jax-mba
+INSTALL_DIR = /opt/jax-mba
 CXX = g++
 CPPFLAGS = -I$(FFMPEG_DIR)/include
 CXXFLAGS = -O3 -std=c++11 -Wall  -g `$(PYLON_DIR)/bin/pylon-config --cflags`
@@ -36,7 +36,10 @@ clean:
 	$(RM) ltm-device  $(OBJS) $(DEPFILES)
 
 install:
-	mkdir -p $(INSTALL_DIR)/bin && cp $(MAIN) $(INSTALL_DIR)/bin/$(MAIN) && cp systemd/mba-client.service /etc/systemd/system/
+	mkdir -p $(INSTALL_DIR)/bin && mkdir $(INSTALL_DIR)/conf && \
+	cp $(MAIN) $(INSTALL_DIR)/bin/$(MAIN) && \
+	cp systemd/mba-client.service /etc/systemd/system/ && \
+	cp conf config_template.ini $(INSTALL_DIR)/conf
 
 $(DEPFILES):
 
