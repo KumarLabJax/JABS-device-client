@@ -79,7 +79,7 @@ as is `nvidia`. If these assumptions are not true, then you will need to modify
 this file.
 
 The program can also be run directly outside of the control of systemd, in
-which case `sd-notify` is a noop. All stderr/stdout lines are prefixed by a
+which case `sd-notify` is a no-op. All stderr/stdout lines are prefixed by a
 loglevel, which is represented by a string of the format`<LOG_LEVEL>`.
 
 ```C
