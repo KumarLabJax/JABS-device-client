@@ -47,17 +47,24 @@ dependencies, however we recommend installing ffmpeg from source.
 Once the dependencies are installed, running  the `make` command in this
 directory will compile the JAX-MBA client. Running `sudo make install` will 
 install the binary in `/opt/jax-mba/bin` and a config file template in 
-`/opt/jax-mba/conf/jax-mba.ini`.
+`/opt/jax-mba/conf/jax-mba.ini`. This config file will have to be completed 
+with system-specific settings before the service can be started.
 
 ### Configuring as a daemon
 
-This program is intended to be run as a 'new style' daemon (managed by systemd). It uses 
-`sd-notify` to let systemd know when it is finished initializing and is ready, therefore 
-it can be configured using `Type=notify` in the [Service] section of its systemd Unit file
+This program is intended to be run as a 'new style' daemon (managed by systemd).
+It uses `sd-notify` to let systemd know when it is finished initializing and is
+ready, therefore it can be configured using `Type=notify` in the [Service] 
+section of its systemd Unit file.
 
-The program can also be run directly outside of the control of systemd, in which case 
-`sd-notify` is a noop. All stderr/stdout lines are prefixed by a loglevel, which is 
-represented by a string of the format`<LOG_LEVEL>`.
+A basic systemd service file will be copied to 
+`/etc/systemd/system/mba-client.service`. It can be started with
+`sudo systemctl start mba-client`. Run `sudo systemctl enable mba-client` to 
+have it started automatically at boot.
+
+The program can also be run directly outside of the control of systemd, in
+which case `sd-notify` is a noop. All stderr/stdout lines are prefixed by a
+loglevel, which is represented by a string of the format`<LOG_LEVEL>`.
 
 ```C
 #define SD_EMERG   "<0>"  /* system is unusable */

@@ -2,7 +2,7 @@
 Description=JAX Mouse Behavior Analysis Client
 
 [Service]
-ExecStart=LD_LIBRARY_PATH=/opt/pylon5/lib64 /opt/jax-mba/bin/mba-client
+ExecStart=LD_LIBRARY_PATH=/opt/pylon5/lib64 /opt/jax-mba/bin/mba-client --config /opt/jax-mba/conf/jax-mba.ini
 ExecReload=/bin/kill -HUP $MAINPID
 Type=notify
 
