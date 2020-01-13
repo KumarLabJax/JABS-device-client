@@ -49,7 +49,7 @@ versions provided by the OS package manger. The Makefile assumes ffmpeg has
 been installed in /opt/ffmpeg-n4.0. If this is not the case, edit 
 `FFMPEG_DIR` to point to the correct location.
 
-The final dependency is on libsystemd-dev, which can be installed with 
+The final dependency is libsystemd-dev, which can be installed with 
 `sudo apt install libsystemd-dev` on Ubuntu. 
 
 #### Make
