@@ -23,9 +23,9 @@ A C++11 compliant compiler is required. Any recent version of gcc or clang
 should be sufficient.
 
 Before you can compile this program, you must initialize git submodules. This
-pulls in a 3rd party library that we depend on. After cloning this
-repository, running `git submodule update --init` will add submodules to your
-git config and clone them. 
+pulls in a 3rd party library that we depend on for reading ini config files.
+After cloning this repository, running `git submodule update --init` will add
+submodules to your git config and clone them. 
 
 This software uses the Microsoft C++ REST SDK:
 https://github.com/microsoft/cpprestsdk
@@ -40,15 +40,18 @@ installed into /opt/pylon5. If this is not the case for you, you will need to
 modify the `PYLONDIR` variable in the Makefile. 
 
 You will also need several ffmpeg libraries, and their development header files. 
-On Ubuntu, `sudo apt install libavcodec-dev libavformat-dev libavfilter-dev 
-libavdevice-dev libavformat-dev libavutil-dev` will install these and their 
-dependencies, however we recommend installing ffmpeg from source. 
+We recommend installing ffmpeg from source rather than depending on the older 
+versions provided by the OS package manger.
+
+The final dependency is on libsystemd-dev, which can be installed with 
+`sudo apt install libsystemd-dev` on Ubuntu. 
 
 Once the dependencies are installed, running  the `make` command in this
 directory will compile the JAX-MBA client. Running `sudo make install` will 
-install the binary in `/opt/jax-mba/bin` and a config file template in 
+install the binary in `/opt/jax-mba/bin/` and a config file template in 
 `/opt/jax-mba/conf/jax-mba.ini`. This config file will have to be completed 
-with system-specific settings before the service can be started.
+with system-specific settings before the service can be started. `make install`
+will also copy a Systend Unit file into `/etc/systemd/system/`
 
 ### Configuring as a daemon
 
@@ -58,9 +61,9 @@ ready, therefore it can be configured using `Type=notify` in the [Service]
 section of its systemd Unit file.
 
 A basic systemd service file will be copied to 
-`/etc/systemd/system/mba-client.service`. It can be started with
-`sudo systemctl start mba-client`. Run `sudo systemctl enable mba-client` to 
-have it started automatically at boot.
+`/etc/systemd/system/mba-client.service` by `make install`. It can be started
+with `sudo systemctl start mba-client`. Run `sudo systemctl enable mba-client`
+to have it started automatically at boot.
 
 The program can also be run directly outside of the control of systemd, in
 which case `sd-notify` is a noop. All stderr/stdout lines are prefixed by a
