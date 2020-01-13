@@ -2,4 +2,4 @@
 *.o
 .idea
 .deps
-ltm-device
+mba-client
