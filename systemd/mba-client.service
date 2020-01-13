@@ -1,0 +1,13 @@
+[Unit]
+Description=JAX Mouse Behavior Analysis Client
+
+[Service]
+User=nvidia
+Group=nvidia
+Environment=LD_LIBRARY_PATH=/opt/pylon5/lib64
+ExecStart=/opt/jax-mba/bin/mba-client --config /opt/jax-mba/conf/jax-mba.ini
+ExecReload=/bin/kill -HUP $MAINPID
+Type=notify
+
+[Install]
+WantedBy=multi-user.target
