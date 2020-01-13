@@ -22,10 +22,14 @@ currently supported.
 A C++11 compliant compiler is required. Any recent version of gcc or clang
 should be sufficient.
 
+#### Git submodules
+
 Before you can compile this program, you must initialize git submodules. This
 pulls in a 3rd party library that we depend on for reading ini config files.
 After cloning this repository, running `git submodule update --init` will add
 submodules to your git config and clone them. 
+
+#### Other dependencies
 
 This software uses the Microsoft C++ REST SDK:
 https://github.com/microsoft/cpprestsdk
@@ -45,6 +49,8 @@ versions provided by the OS package manger.
 
 The final dependency is on libsystemd-dev, which can be installed with 
 `sudo apt install libsystemd-dev` on Ubuntu. 
+
+#### Make
 
 Once the dependencies are installed, running  the `make` command in this
 directory will compile the JAX-MBA client. Running `sudo make install` will 
