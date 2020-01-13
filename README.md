@@ -41,11 +41,13 @@ The Basler pylon SDK, which we use to control our camera, is also required. It
 can be obtained from the Basler website:
 https://www.baslerweb.com/en/products/software/. Our Makefile assumes Pylon is 
 installed into /opt/pylon5. If this is not the case for you, you will need to 
-modify the `PYLONDIR` variable in the Makefile. 
+modify the `PYLON_DIR` variable in the Makefile. 
 
 You will also need several ffmpeg libraries, and their development header files. 
 We recommend installing ffmpeg from source rather than depending on the older 
-versions provided by the OS package manger.
+versions provided by the OS package manger. The Makefile assumes ffmpeg has 
+been installed in /opt/ffmpeg-n4.0. If this is not the case, edit 
+`FFMPEG_DIR` to point to the correct location.
 
 The final dependency is on libsystemd-dev, which can be installed with 
 `sudo apt install libsystemd-dev` on Ubuntu. 
