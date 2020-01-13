@@ -36,7 +36,7 @@ clean:
 	$(RM) $(MAIN)  $(OBJS) $(DEPFILES)
 
 install:
-	mkdir -p $(INSTALL_DIR)/bin && mkdir $(INSTALL_DIR)/conf && \
+	mkdir -p $(INSTALL_DIR)/bin && mkdir -p $(INSTALL_DIR)/conf && \
 	cp $(MAIN) $(INSTALL_DIR)/bin/$(MAIN) && \
 	cp systemd/mba-client.service /etc/systemd/system/ && \
 	cp conf/config_template.ini $(INSTALL_DIR)/conf/jax-mba.ini
