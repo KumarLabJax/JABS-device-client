@@ -33,7 +33,7 @@ $(MAIN): $(OBJS) $(HEADERS)
 	$(CXX) $(CPPFLAGS) $(DEPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	$(RM) ltm-device  $(OBJS) $(DEPFILES)
+	$(RM) $(MAIN)  $(OBJS) $(DEPFILES)
 
 install:
 	mkdir -p $(INSTALL_DIR)/bin && mkdir $(INSTALL_DIR)/conf && \
