@@ -41,13 +41,29 @@ The Basler pylon SDK, which we use to control our camera, is also required. It
 can be obtained from the Basler website:
 https://www.baslerweb.com/en/products/software/. Our Makefile assumes Pylon is 
 installed into /opt/pylon5. If this is not the case for you, you will need to 
-modify the `PYLON_DIR` variable in the Makefile. 
+modify the `PYLON_DIR` variable in the Makefile.
+
+Pylon can be placed into /opt via the following commands after downloading the appropriate package:
+```
+tar -xvf pylon-5.1.0.12682-arm64
+cd pylon-5.1.0.12682-arm64
+sudo tar -C /opt -xvf pylonSDK-5.1.0.12682.tar.gz
+```
 
 You will also need several ffmpeg libraries, and their development header files. 
 We recommend installing ffmpeg from source rather than depending on the older 
 versions provided by the OS package manger. The Makefile assumes ffmpeg has 
 been installed in /opt/ffmpeg-n4.0. If this is not the case, edit 
-`FFMPEG_DIR` to point to the correct location.
+`FFMPEG_DIR` to point to the correct location. ffmpeg depends on other system libraries that can be installed via `sudo apt install libx264-dev libvdpau-dev libbz2-dev liblzma-dev`
+
+We have tested compiling ffmpeg with the following configuration [v n4.0](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.0):
+```
+tar -xvf FFmpeg-n4.0.tar.gz
+cd FFmpeg-n4.0
+./configure --enable-libx264 --enable-gpl --enable-gray --prefix=/opt/ffmpeg-n4.0/
+make
+sudo make install
+```
 
 The final dependency is libsystemd-dev, which can be installed with 
 `sudo apt install libsystemd-dev` on Ubuntu. 
@@ -92,3 +108,8 @@ loglevel, which is represented by a string of the format`<LOG_LEVEL>`.
 #define SD_INFO    "<6>"  /* informational */
 #define SD_DEBUG   "<7>"  /* debug-level messages */
 ```
+
+### Extra Configurations
+
+The recording software expects ethernet cameras and will attempt to use an MTU value of 9000 (most systems default to 1500). To adjust this value, you can run this command (adjusting "Wired connection 1" to the ethernet port connected to the camera):
+`sudo nmcli c modify "Wired connection 1" ethernet.mtu 9000`

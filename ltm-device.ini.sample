@@ -1,10 +1,12 @@
 [app]
 api = http://bhltms-dev.jax.org/api
-update_interval = 30
+update_interval = 10
+location = ROOM
 [disk]
 video_capture_dir = /media/nvidia/TOSHIBA EXT
 [camera]
 frame_width = 800
 frame_height = 800
 enable_pgi = true
-
+[streaming]
+rtmp = rtmp://bhltms-dev.jax.org/ltm
