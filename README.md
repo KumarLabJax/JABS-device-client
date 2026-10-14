@@ -1,5 +1,14 @@
 # JAX Mouse Behavior Analysis
 
+> **Disclaimer: Proof of concept only.**
+> This code is a proof of concept and is not intended for production use. It
+> does **not** implement any security between the device and the server:
+> communication is not authenticated, authorized, or otherwise protected. Do not
+> deploy it on untrusted networks or use it to handle sensitive data.
+>
+> A production-ready system with a cloud-hosted control server is currently under
+> development.
+
 ## Overview
 
 This program implements a service that is run continuously on the video 
